@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.model;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.validator.constraints.Length;
 import ru.yandex.practicum.filmorate.validator.ValidFilmReleaseDate;
 
@@ -12,9 +13,11 @@ import java.time.LocalDate;
 
 @Data
 @Builder
+@EqualsAndHashCode
 public class Film {
 
     private int id;
+    
     @NotBlank(message = "Name should not be blank")
     @NotEmpty(message = "Name should not be empty")
     private String name;

@@ -6,15 +6,15 @@ import ru.yandex.practicum.filmorate.exception.AlreadyExistException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import javax.validation.Valid;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Slf4j
 @RestController
 public class UserController {
 
-    private static final Set<User> users = new HashSet<>(); // Пока нет БД храним в контроллере
+    private static final List<User> users = new ArrayList<>(); // Пока нет БД храним в контроллере
 
     // Cоздание пользователя;
     @PostMapping("/users")
@@ -25,6 +25,7 @@ public class UserController {
         }
 
         log.info("Обработан POST запрос /user");
+        replaceNameWithLogin(user);
         users.add(user);
         return user;
     }
@@ -33,15 +34,16 @@ public class UserController {
     @PutMapping("/users")
     public User updateUser(@Valid @RequestBody User user) {
 
-        users.removeIf(existUser -> existUser.getEmail().equals(user.getEmail()));
+        users.removeIf(existUser -> existUser.getId() == user.getId());
         users.add(user);
         log.info("Обработан PUT запрос /user");
+        replaceNameWithLogin(user);
         return user;
     }
 
     // Получение списка всех пользователей.
     @GetMapping("/users")
-    public Set<User> getAllUsers() {
+    public List<User> getAllUsers() {
 
         log.info("Обработан GET запрос /users");
         return users;

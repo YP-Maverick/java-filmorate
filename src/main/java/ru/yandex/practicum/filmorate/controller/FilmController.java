@@ -5,14 +5,14 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import javax.validation.Valid;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @RestController
 public class FilmController {
 
-    private static final Set<Film> films = new HashSet<>(); // Пока нет БД храним в контроллере
+    private static final List<Film> films = new ArrayList<>(); // Пока нет БД храним в контроллере
 
     // Cоздание пользователя;
     @PostMapping("/films")
@@ -21,16 +21,15 @@ public class FilmController {
             log.warn("Film уже существует");
         }
 
-        log.info("Обработан POST запрос /film");
         films.add(film);
+        log.info("Обработан POST запрос /film");
         return film;
     }
 
     // Обновление пользователя;
     @PutMapping("/films")
     public Film updateFilm(@Valid @RequestBody Film film) {
-        films.removeIf(existFilm -> existFilm.getName().equals(film.getName())
-                                 && existFilm.getReleaseDate().equals(film.getReleaseDate()));
+        films.removeIf(existFilm -> existFilm.getId() == film.getId());
         films.add(film);
         log.info("Обработан PUT запрос /film");
         return film;
@@ -38,7 +37,7 @@ public class FilmController {
 
     // Получение списка всех пользователей.
     @GetMapping("/films")
-    public Set<Film> getAlLFilms() {
+    public List<Film> getAlLFilms() {
         return films;
     }
 }
