@@ -12,10 +12,9 @@ import java.time.LocalDate;
 
 @Data
 @ToString
-@EqualsAndHashCode
 public class User {
 
-    private int id;
+    private Integer id;
 
     @NotBlank(message = "Email must not be blank")
     @Email(message = "Invalid email format")

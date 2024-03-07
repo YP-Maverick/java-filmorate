@@ -13,9 +13,8 @@ import java.time.LocalDate;
 
 @Data
 @Builder
-@EqualsAndHashCode
 public class Film {
-    private int id;
+    private Integer id;
 
     @NotBlank(message = "Name should not be blank")
     @NotEmpty(message = "Name should not be empty")
