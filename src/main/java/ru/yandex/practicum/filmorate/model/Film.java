@@ -17,17 +17,17 @@ import java.time.LocalDate;
 public class Film {
     private int id;
 
-    @NotBlank(message = "Имя не должно быть пустым")
-    @NotEmpty(message = "Имя не должно быть пустым")
+    @NotBlank(message = "Name should not be blank")
+    @NotEmpty(message = "Name should not be empty")
     private String name;
 
-    @Length(max = 200, message = "Длина описания должна быть больше 200 символов")
+    @Length(max = 200, message = "Description len must be greater than 200")
     private String description;
 
     // Пользовательская аннотация валидации
     @ValidFilmReleaseDate
     private LocalDate releaseDate;
 
-    @Positive(message = "Должно быть больше 0")
+    @Positive(message = "must be greater than 0")
     private int duration;
 }
