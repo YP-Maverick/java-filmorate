@@ -46,4 +46,10 @@ public class UserController {
         log.info("Обработан GET запрос /users");
         return users;
     }
+
+    public void replaceNameWithLogin(User user) {
+        if (user.getName() == null) {
+            user.setName(user.getLogin());
+        }
+    }
 }

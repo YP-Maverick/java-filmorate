@@ -3,12 +3,11 @@ package ru.yandex.practicum.filmorate.model;
 import lombok.Builder;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
-import org.hibernate.validator.constraints.time.DurationMin;
 import ru.yandex.practicum.filmorate.validator.ValidFilmReleaseDate;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
-import java.time.Duration;
+import javax.validation.constraints.Positive;
 import java.time.LocalDate;
 
 @Data
@@ -26,6 +25,7 @@ public class Film {
     // Кастомная аннотация-валидотор
     @ValidFilmReleaseDate
     private LocalDate releaseDate;
-    @DurationMin(seconds = 1)
-    private Duration duration;
+
+    @Positive(message = "must be greater than 0")
+    private int duration;
 }

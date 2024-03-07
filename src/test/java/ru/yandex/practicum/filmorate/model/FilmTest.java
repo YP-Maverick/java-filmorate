@@ -24,7 +24,7 @@ public class FilmTest {
                 .name("Example Film")
                 .description("A sample film description")
                 .releaseDate(LocalDate.now().minusYears(10))
-                .duration(Duration.ofHours(2))
+                .duration(100)
                 .build();
     }
 
@@ -76,13 +76,13 @@ public class FilmTest {
     @Test
     public void testInvalidDuration() {
         Film film = createFilmWithDefaults();
-        film.setDuration(Duration.ofSeconds(0));
+        film.setDuration(-100);
 
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
 
         ConstraintViolation<Film> durationViolation = violations.stream().findFirst().orElse(null);
 
         assertEquals(1, violations.size(), "Violation of restrictions more than 1");
-        assertEquals("must be longer than or equal to 1 second", durationViolation.getMessage());
+        assertEquals("must be greater than 0", durationViolation.getMessage());
     }
 }
