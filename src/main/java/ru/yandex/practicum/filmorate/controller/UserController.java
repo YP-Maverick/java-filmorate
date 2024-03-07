@@ -9,12 +9,12 @@ import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 
-
 @Slf4j
 @RestController
 public class UserController {
 
     private static final List<User> users = new ArrayList<>(); // Пока нет БД храним в контроллере
+    private static int idCounter = 0;
 
     // Cоздание пользователя;
     @PostMapping("/users")
@@ -23,9 +23,9 @@ public class UserController {
             log.warn("User уже существует");
             throw new AlreadyExistException("User уже существует");
         }
-
         log.info("Обработан POST запрос /user");
         replaceNameWithLogin(user);
+        user.setId(generateId());
         users.add(user);
         return user;
     }
@@ -33,8 +33,7 @@ public class UserController {
     // Обновление пользователя;
     @PutMapping("/users")
     public User updateUser(@Valid @RequestBody User user) {
-
-        users.removeIf(existUser -> existUser.getId() == user.getId());
+        users.removeIf(existingUser -> existingUser.getId() == user.getId());
         users.add(user);
         log.info("Обработан PUT запрос /user");
         replaceNameWithLogin(user);
@@ -44,7 +43,6 @@ public class UserController {
     // Получение списка всех пользователей.
     @GetMapping("/users")
     public List<User> getAllUsers() {
-
         log.info("Обработан GET запрос /users");
         return users;
     }
@@ -54,4 +52,9 @@ public class UserController {
             user.setName(user.getLogin());
         }
     }
+
+    private Integer generateId() {
+        return idCounter++;
+    }
 }
+
