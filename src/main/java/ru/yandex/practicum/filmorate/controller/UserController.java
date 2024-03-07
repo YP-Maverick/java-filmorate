@@ -17,7 +17,7 @@ public class UserController {
     private static final Set<User> users = new HashSet<>(); // Пока нет БД храним в контроллере
 
     // Cоздание пользователя;
-    @PostMapping("/user")
+    @PostMapping("/users")
     public User createUser(@Valid @RequestBody User user) {
         if (users.contains(user)) {
             log.warn("User уже существует");
@@ -30,7 +30,7 @@ public class UserController {
     }
 
     // Обновление пользователя;
-    @PutMapping("/user")
+    @PutMapping("/users")
     public User updateUser(@Valid @RequestBody User user) {
 
         users.removeIf(existUser -> existUser.getEmail().equals(user.getEmail()));

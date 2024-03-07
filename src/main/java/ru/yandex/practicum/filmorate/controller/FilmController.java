@@ -15,7 +15,7 @@ public class FilmController {
     private static final Set<Film> films = new HashSet<>(); // Пока нет БД храним в контроллере
 
     // Cоздание пользователя;
-    @PostMapping("/film")
+    @PostMapping("/films")
     public Film createFilm(@Valid @RequestBody Film film) {
         if (films.contains(film)) {
             log.warn("Film уже существует");
@@ -27,7 +27,7 @@ public class FilmController {
     }
 
     // Обновление пользователя;
-    @PutMapping("/film")
+    @PutMapping("/films")
     public Film updateFilm(@Valid @RequestBody Film film) {
         films.removeIf(existFilm -> existFilm.getName().equals(film.getName())
                                  && existFilm.getReleaseDate().equals(film.getReleaseDate()));
