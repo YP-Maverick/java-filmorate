@@ -15,20 +15,19 @@ import java.time.LocalDate;
 @Builder
 @EqualsAndHashCode
 public class Film {
-
     private int id;
-    
-    @NotBlank(message = "Name should not be blank")
-    @NotEmpty(message = "Name should not be empty")
+
+    @NotBlank(message = "Имя не должно быть пустым")
+    @NotEmpty(message = "Имя не должно быть пустым")
     private String name;
 
-    @Length(max = 200, message = "Description len must be greater than 200")
+    @Length(max = 200, message = "Длина описания должна быть больше 200 символов")
     private String description;
 
-    // Кастомная аннотация-валидотор
+    // Пользовательская аннотация валидации
     @ValidFilmReleaseDate
     private LocalDate releaseDate;
 
-    @Positive(message = "must be greater than 0")
+    @Positive(message = "Должно быть больше 0")
     private int duration;
 }
