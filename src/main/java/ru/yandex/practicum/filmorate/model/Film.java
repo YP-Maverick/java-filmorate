@@ -23,7 +23,7 @@ public class Film {
     private String description;
 
     // Пользовательская аннотация валидации
-    @ValidFilmReleaseDate
+    @ValidFilmReleaseDate(message = "Invalid film release date", fistFilmDate = "1895-12-28")
     private LocalDate releaseDate;
 
     @Positive(message = "must be greater than 0")

@@ -52,7 +52,8 @@ public class FilmController {
     // Получение списка всех пользователей.
     @GetMapping("/films")
     public List<Film> getAllFilms() {
-        return films;
+        log.info("Обработан GET запрос /films");
+        return new ArrayList<>(films);
     }
 
     private Integer generateId() {

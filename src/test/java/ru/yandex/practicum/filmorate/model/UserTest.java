@@ -18,11 +18,11 @@ public class UserTest {
     private final Validator validator = validatorFactory.getValidator();
 
     private User createUserWithDefaults() {
-        User user = new User();
-        user.setEmail("normal.email@example.com");
-        user.setLogin("normal_login");
-        user.setBirthday(LocalDate.now().minusYears(20));
-        return user;
+        return User.builder()
+                .email("normal.email@example.com")
+                .login("normal_login")
+                .birthday(LocalDate.now().minusYears(20))
+                .build();
     }
 
     @Test

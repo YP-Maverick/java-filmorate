@@ -55,7 +55,7 @@ public class UserController {
     @GetMapping("/users")
     public List<User> getAllUsers() {
         log.info("Обработан GET запрос /users");
-        return users;
+        return new ArrayList<>(users);
     }
 
     public void replaceNameWithLogin(User user) {

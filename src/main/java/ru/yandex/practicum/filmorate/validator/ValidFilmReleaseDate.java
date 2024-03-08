@@ -14,7 +14,9 @@ import java.lang.annotation.Target;
 @ReportAsSingleViolation
 public @interface ValidFilmReleaseDate {
 
-    String message() default "Invalid film release date";
+    String message() default "{ru.yandex.practicum.filmorate.validator.ValidFilmReleaseDate.message}";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
+
+    String fistFilmDate();
 }
