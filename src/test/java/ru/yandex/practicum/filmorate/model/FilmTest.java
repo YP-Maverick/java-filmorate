@@ -19,7 +19,7 @@ public class FilmTest {
 
     private Film createFilmWithDefaults() {
         return Film.builder()
-                .id(0)
+                .id(0L)
                 .name("Example Film")
                 .description("A sample film description")
                 .releaseDate(LocalDate.now().minusYears(10))
