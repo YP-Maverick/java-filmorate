@@ -97,14 +97,9 @@ public class UserService {
 
     // Получение всех друзей пользователя
     public List<User> getFriends(Long userId) {
-        User user = userStorage.getUserById(userId);
-        if (user.getFriendsId() == null) {
-            user.setFriendsId(new HashSet<>());
-        }
-
         return userStorage.getAllUsers()
                 .stream()
-                .filter(u -> user.getFriendsId().contains(u.getId()))
+                .filter(u -> userStorage.getUserById(userId).getFriendsId().contains(u.getId()))
                 .collect(Collectors.toList());
     }
 
@@ -113,8 +108,12 @@ public class UserService {
 
         User user = userStorage.getUserById(userId);
         User otherUser = userStorage.getUserById(otherUserId);
-        if (user == null || otherUser == null) {
-            throw new NotFoundException("Пользователь не найден");
+        if (user == null) {
+            throw new NotFoundException("User with this ID not found");
+        }
+
+        if (otherUser == null) {
+            throw new NotFoundException("OtherUser with this ID not found");
         }
 
         Set<Long> intersection = new HashSet<>(user.getFriendsId());
