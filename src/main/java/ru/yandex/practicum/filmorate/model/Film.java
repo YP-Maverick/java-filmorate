@@ -34,6 +34,6 @@ public class Film {
     private int duration;
 
     @Builder.Default
-    Set<Long> likedUsersId = new HashSet<>();
+    private Set<Long> likedUsersId = new HashSet<>();
 
 }
