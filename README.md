@@ -1,6 +1,7 @@
 # Fimorate-BD-Diagram
 
-![image](https://github.com/YP-Maverick/Fimorate-BD-Diagram/assets/147594756/f51fc2d3-b342-49d5-8c58-308851b6274d)
+![image](https://github.com/YP-Maverick/Fimorate-BD-Diagram/assets/147594756/0113be6d-f978-4d24-b896-67f9f94a68c1)
+
 
 ER диаграмма сервиса оценкиц фильмов
 
