@@ -33,4 +33,5 @@ public class User {
 
     @Builder.Default
     private Set<Long> friendsId = new HashSet<>();
+    
 }

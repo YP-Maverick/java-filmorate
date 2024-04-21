@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import ru.yandex.practicum.filmorate.exception.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.exception.IdNotAllowedException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 
@@ -34,12 +35,22 @@ public class ExceptionFilmorateHandler {
     }
 
     @ExceptionHandler
-    public ResponseEntity<Map<String, String>> handleValidationException(final MethodArgumentNotValidException e) {
-        log.debug("Получен статус 500 Not Valid Param {}", e.getMessage(), e);
+    public ResponseEntity<Map<String, String>> handleEntityNotFoundException(final EntityNotFoundException e) {
+        log.debug("Получен статус 400 Not Valid Param {}", e.getMessage(), e);
 
         return new ResponseEntity<>(
                 Map.of("error", e.getMessage()),
-                HttpStatus.INTERNAL_SERVER_ERROR
+                HttpStatus.BAD_REQUEST
+        );
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Map<String, String>> handleException(final MethodArgumentNotValidException e) {
+        log.debug("Получен статус 400 Not Valid Param {}", e.getMessage(), e);
+
+        return new ResponseEntity<>(
+                Map.of("error", e.getMessage()),
+                HttpStatus.BAD_REQUEST
         );
     }
 

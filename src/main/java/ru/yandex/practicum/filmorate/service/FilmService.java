@@ -1,88 +1,143 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.storage.dao.FilmDao;
+import ru.yandex.practicum.filmorate.storage.dao.GenreDao;
+import ru.yandex.practicum.filmorate.storage.dao.MpaDao;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class FilmService {
 
-    private static long idCounter = 1;
-    private final FilmStorage filmStorage;
+    private final FilmDao filmDao;
+
+    public FilmService(FilmDao userDao) {
+        this.filmDao = userDao;
+    }
 
     // Cоздание пользователя;
-    public Film createFilm(Film film)  {
-        film.setId(generateId());
-        filmStorage.add(film);
-        return film;
+    public Film createFilm(Film film) {
+
+        MpaDao mpaDao = filmDao.getMpaDao();
+        Long mpaId = film.getMpa().getId();
+
+        GenreDao genreDao = filmDao.getGenreDao();
+        Set<Genre> genres = film.getGenres();
+
+        boolean isMpaValid = mpaDao.checkMpaId(mpaId) || mpaId == null;
+
+        boolean areGenresValid = genres == null ||
+                genreDao.checkAllGenresExist(genres.stream()
+                .mapToLong(Genre::getId)
+                .boxed()
+                .collect(Collectors.toList()));
+
+        if (isMpaValid && areGenresValid) {
+            return filmDao.createFilm(film);
+        } else {
+            throw new EntityNotFoundException("MPA with this ID not created or invalid Genre ID");
+        }
     }
+
+
 
     // Обновление пользователя;
     public Film updateFilm(Film film) {
-        if (film.getId() != null) {
-            boolean isExist = filmStorage.getAllFilms().stream().anyMatch(existingFilm -> Objects.equals(existingFilm.getId(), film.getId()));
-            if (!isExist) {
-                throw new NotFoundException("Film with this ID not found");
-            }
-            filmStorage.getAllFilms().removeIf(existingFilm -> Objects.equals(existingFilm.getId(), film.getId()));
-            filmStorage.add(film);
+
+        if (filmDao.checkFilmId(film.getId())) {
+            return filmDao.updateFilm(film);
         } else {
-            film.setId(generateId());
-            filmStorage.add(film);
+            throw new NotFoundException("User with this ID not found");
         }
-        return film;
     }
+
+    public void deleteFilm(Long filmId) {
+        filmDao.deleteFilm(filmId);
+    }
+
+    // Получение фильма по id
+    public Film getFilmById(Long filmId) {
+
+        if (filmDao.checkFilmId(filmId)) {
+            return filmDao.getFilmById(filmId);
+        } else {
+            throw new NotFoundException("Film with this ID not found");
+        }
+
+    }
+
 
     // Получение списка всех пользователей.
     public List<Film> getAllFilms() {
-        return filmStorage.getAllFilms();
+        return filmDao.getAllFilms();
     }
 
     // User cтавит лайк
-    public Film addLike(Long filmId, Long userId) {
-        Film film = filmStorage.getFilmById(filmId);
+    public void addLike(Long filmId, Long userId) {
 
-        if (film == null) {
+        log.warn("FILM ID CHECK " + filmId);
+
+        if (!filmDao.checkFilmId(filmId)) {
             throw new NotFoundException("Film with this ID not found");
         }
-
-        film.getLikedUsersId().add(userId);
-        return film;
+        filmDao.addLike(filmId, userId);
     }
 
     // User удаляет лайк
-    public Film deleteLike(Long filmId, Long userId) {
-        Film film = filmStorage.getFilmById(filmId);
+    public void deleteLike(Long filmId, Long userId) {
 
-        if (film == null) {
+        if (!filmDao.checkFilmId(filmId)) {
             throw new NotFoundException("Film with this ID not found");
         }
 
-        film.getLikedUsersId().remove(userId);
-        return film;
+       filmDao.deleteLike(filmId, userId);
     }
 
     // Возвращает список из первых count фильмов по количеству лайков.
     public List<Film> getPopularFilms(int count) {
         if (count == 0) count = 10;
-        return filmStorage.getAllFilms()
-                .stream()
-                .sorted(Comparator.comparingInt((Film film) -> film.getLikedUsersId().size())
-                        .reversed())
-                .limit(count)
-                .collect(Collectors.toList());
+
+        return filmDao.getPopularFilms(count);
     }
 
-    private long generateId() {
-        return idCounter++;
+
+    public Mpa getMpa(Long mpaId) {
+
+        MpaDao mpaDao = filmDao.getMpaDao();
+        if (mpaDao.checkMpaId(mpaId)) {
+            return mpaDao.getMpaById(mpaId);
+        } else {
+            throw new NotFoundException("Genre with this ID not found");
+        }
     }
+
+    public List<Mpa> getAllMpa() {
+        return filmDao.getMpaDao().getAllMpa();
+    }
+
+    public Genre getGenre(Long genreId) {
+        GenreDao genreDao = filmDao.getGenreDao();
+        if (genreDao.checkGenreId(genreId)) {
+            return genreDao.getGenreById(genreId);
+        } else {
+            throw new NotFoundException("Genre with this ID not found");
+        }
+    }
+
+    public List<Genre> getAllGenres() {
+        return filmDao.getGenreDao().getAllGenres();
+    }
+
+
 }

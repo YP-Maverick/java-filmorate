@@ -36,4 +36,7 @@ public class Film {
     @Builder.Default
     private Set<Long> likedUsersId = new HashSet<>();
 
+    private Mpa mpa;
+
+    private Set<Genre> genres;
 }
