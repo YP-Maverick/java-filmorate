@@ -142,11 +142,12 @@ public class FilmDaoImpl implements FilmDao {
         return jdbcTemplate.query(sql, filmRowMapper, count);
     }
 
+
     @Override
-    public Boolean checkFilmId(Long film_id) {
+    public Boolean checkFilmId(Long filmId) {
         String sql = "SELECT film_id FROM film WHERE film_id = ?";
         try {
-            jdbcTemplate.queryForObject(sql, Long.class, film_id);
+            jdbcTemplate.queryForObject(sql, Long.class, filmId);
         } catch (EmptyResultDataAccessException e) {
             log.warn("FALSE");
             return false;
