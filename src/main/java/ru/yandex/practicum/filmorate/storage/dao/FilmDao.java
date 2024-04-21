@@ -11,9 +11,13 @@ public interface FilmDao {
     MpaDao getMpaDao();
 
     Film createFilm(Film film);
+
     Film updateFilm(Film film);
+
     void deleteFilm(Long filmId);
+
     List<Film> getAllFilms();
+
     Film getFilmById(Long id);
 
     List<Film> getPopularFilms(int count);
