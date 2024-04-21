@@ -75,13 +75,6 @@ public class UserDaoImpl implements UserDao {
         return user;
     }
 
-    @Override
-    public void deleteUser(Long userId) {
-        String sql = "DELETE FROM users WHERE id = ?";
-        jdbcTemplate.update(sql, userId);
-        sql = "DELETE FROM friendship WHERE user_id = ? OR friend_id = ?";
-        jdbcTemplate.update(sql, userId, userId);
-    }
 
     @Override
     public List<User> getAllUsers() {

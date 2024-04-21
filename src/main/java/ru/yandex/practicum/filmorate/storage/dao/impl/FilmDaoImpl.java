@@ -143,11 +143,6 @@ public class FilmDaoImpl implements FilmDao {
     }
 
     @Override
-    public String getMpaByFilmId(Long filmId) {
-        return null;
-    }
-
-    @Override
     public Boolean checkFilmId(Long film_id) {
         String sql = "SELECT film_id FROM film WHERE film_id = ?";
         try {

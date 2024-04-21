@@ -10,7 +10,6 @@ import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
-
 @Jacksonized
 @Data
 @Builder
@@ -33,5 +32,4 @@ public class User {
 
     @Builder.Default
     private Set<Long> friendsId = new HashSet<>();
-    
 }
