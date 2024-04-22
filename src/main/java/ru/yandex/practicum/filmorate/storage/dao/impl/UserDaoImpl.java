@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.storage.dao.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -18,7 +17,6 @@ public class UserDaoImpl implements UserDao {
 
     private JdbcTemplate jdbcTemplate;
 
-    @Autowired
     public UserDaoImpl(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
