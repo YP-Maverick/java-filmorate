@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.dao.impl;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -18,38 +18,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
-@Slf4j
+@RequiredArgsConstructor
 public class FilmDaoImpl implements FilmDao {
 
 
-    private JdbcTemplate jdbcTemplate;
-    private MpaDao mpaDao;
-    private GenreDao genreDao;
-
-    @Override
-    public GenreDao getGenreDao() {
-        return genreDao;
-    }
-
-    @Override
-    public MpaDao getMpaDao() {
-        return mpaDao;
-    }
-
-    @Autowired
-    public FilmDaoImpl(JdbcTemplate jdbcTemplate, MpaDao mpaDao, GenreDao genreDao) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.mpaDao = mpaDao;
-        this.genreDao = genreDao;
-    }
+    private final JdbcTemplate jdbcTemplate;
 
     private final RowMapper<Film> filmRowMapper = (rs, rowNum) -> {
         Long filmId = rs.getLong("film_id");
-
-        // Тесты в Postman не пропускают список жанров без сортировки по id
-        List<Genre> sortedGenres = genreDao.getGenresByFilmId(filmId).stream()
-                .sorted(Comparator.comparing(Genre::getId))
-                .collect(Collectors.toList());
 
         Film film = Film.builder()
                 .id(filmId)
@@ -57,11 +33,7 @@ public class FilmDaoImpl implements FilmDao {
                 .description(rs.getString("description"))
                 .releaseDate(rs.getDate("release_date").toLocalDate())
                 .duration(rs.getInt("duration"))
-                .mpa(mpaDao.getMpaByFilmId(filmId))
-                .genres(new HashSet<>(sortedGenres))
                 .build();
-
-        log.warn("ROW MAPPER " + film.toString());
 
         return film;
     };
@@ -83,9 +55,6 @@ public class FilmDaoImpl implements FilmDao {
         Number generatedId = jdbcInsert.executeAndReturnKey(parameters);
         film.setId((Long) generatedId);
 
-        log.warn("ID = " + generatedId + " " + film.toString());
-
-        genreDao.saveGenresByFilmId((Long) generatedId, film.getGenres().stream().collect(Collectors.toList()));
         return film;
     }
 
@@ -93,6 +62,7 @@ public class FilmDaoImpl implements FilmDao {
     public Film updateFilm(Film film) {
         String sql = "UPDATE film SET name = ?, description = ?, release_date = ?, duration = ? WHERE film_id = ?";
         jdbcTemplate.update(sql, film.getName(), film.getDescription(), Date.valueOf(film.getReleaseDate()), film.getDuration(), film.getId());
+
         return film;
     }
 
@@ -148,7 +118,6 @@ public class FilmDaoImpl implements FilmDao {
         try {
             jdbcTemplate.queryForObject(sql, Long.class, filmId);
         } catch (EmptyResultDataAccessException e) {
-            log.warn("FALSE");
             return false;
         }
         return true;

@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.dao.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -33,7 +34,9 @@ public class GenreDaoImpl implements GenreDao {
 
     @Override
     public void saveGenresByFilmId(Long filmId, List<Genre> genres) {
+
         String sql = "INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)";
+
         jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
@@ -53,10 +56,13 @@ public class GenreDaoImpl implements GenreDao {
         String sql = "SELECT g.genre_id, g.name " +
                      "FROM genre g " +
                      "INNER JOIN film_genre fg ON g.genre_id = fg.genre_id " +
-                     "WHERE fg.film_id = ?;";
+                     "WHERE fg.film_id = ? " +
+                     "ORDER BY g.genre_id;";
         List<Genre>  res;
         try {
+            // Тесты в Postman не пропускают список жанров без сортировки по id
             res = jdbcTemplate.query(sql, mapRowMapper, filmId);
+
         } catch (EmptyResultDataAccessException e) {
             return null;
         }
@@ -65,7 +71,9 @@ public class GenreDaoImpl implements GenreDao {
 
     @Override
     public Boolean checkGenreId(Long id) {
-        String sql = "SELECT genre_id FROM genre WHERE genre_id = ?";
+        String sql = "SELECT genre_id " +
+                     "FROM genre " +
+                     "WHERE genre_id = ?";
         try {
             jdbcTemplate.queryForObject(sql, Long.class, id);
         } catch (EmptyResultDataAccessException e) {

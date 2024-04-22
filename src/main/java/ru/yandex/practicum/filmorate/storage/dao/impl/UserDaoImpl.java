@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.storage.dao.impl;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-@Slf4j
 public class UserDaoImpl implements UserDao {
 
     private JdbcTemplate jdbcTemplate;
@@ -38,9 +36,6 @@ public class UserDaoImpl implements UserDao {
         String sql = "SELECT DISTINCT friend_id FROM friendship WHERE user_id = ?";
         List<Long> friendsIds = jdbcTemplate.query(sql, (rs1, rowNum1) -> rs1.getLong(1), user.getId());
 
-        log.warn(user.getId().toString());
-        log.warn(friendsIds.toString());
-
         user.getFriendsId().addAll(friendsIds);
 
         return user;
@@ -48,8 +43,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public User createUser(User user) {
-        //String sql = "INSERT INTO users (email, name, login, birthday) VALUES (?, ?, ?, ?)";
-        //jdbcTemplate.update(sql, user.getEmail(), user.getLogin(), user.getName(), user.getBirthday());
+
         SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("users")
                 .usingGeneratedKeyColumns("id");
@@ -118,15 +112,11 @@ public class UserDaoImpl implements UserDao {
         String checkSql = "SELECT * FROM users WHERE id = ?";
         List<User> users = jdbcTemplate.query(checkSql, userRowMapper, friendId);
 
-        log.warn(userId.toString() + " userID");
-        log.warn(friendId.toString() + " friendID");
-
         return users.stream().findFirst().orElse(null);
     }
 
     @Override
     public void deleteFriend(Long userId, Long friendId) {
-        //String sql = "DELETE FROM friendship WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)";
 
         String sql = "DELETE FROM friendship WHERE (user_id = ? AND friend_id = ?)";
         jdbcTemplate.update(sql, userId, friendId);

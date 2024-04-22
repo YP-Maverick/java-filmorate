@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.extern.slf4j.Slf4j;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -11,109 +12,116 @@ import ru.yandex.practicum.filmorate.storage.dao.FilmDao;
 import ru.yandex.practicum.filmorate.storage.dao.GenreDao;
 import ru.yandex.practicum.filmorate.storage.dao.MpaDao;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@Slf4j
+@RequiredArgsConstructor
 public class FilmService {
 
     private final FilmDao filmDao;
+    private final GenreDao genreDao;
+    private final MpaDao mpaDao;
 
-    public FilmService(FilmDao userDao) {
-        this.filmDao = userDao;
+
+    private void validateFilmId(Long filmId) {
+        if (!filmDao.checkFilmId(filmId)) {
+            throw new NotFoundException("Film with this ID not found");
+        }
     }
 
-    // Cоздание пользователя;
+    private void validateMpaAndGenres(Film film) {
+
+        if (!mpaDao.checkMpaId(film.getMpa().getId())) {
+            throw new EntityNotFoundException("Invalid MPA ID");
+        }
+        if (film.getGenres() != null && !genreDao.checkAllGenresExist(
+                film.getGenres().stream().map(Genre::getId).collect(Collectors.toList()))) {
+            throw new EntityNotFoundException("Invalid Genre ID");
+        }
+    }
+
+    // Создание фильма
     public Film createFilm(Film film) {
+        validateMpaAndGenres(film);
 
-        MpaDao mpaDao = filmDao.getMpaDao();
-        Long mpaId = film.getMpa().getId();
+        Film res = filmDao.createFilm(film);
 
-        GenreDao genreDao = filmDao.getGenreDao();
-        Set<Genre> genres = film.getGenres();
-
-        boolean isMpaValid = mpaDao.checkMpaId(mpaId) || mpaId == null;
-
-        boolean areGenresValid = genres == null ||
-                genreDao.checkAllGenresExist(genres.stream()
-                .mapToLong(Genre::getId)
-                .boxed()
-                .collect(Collectors.toList()));
-
-        if (isMpaValid && areGenresValid) {
-            return filmDao.createFilm(film);
-        } else {
-            throw new EntityNotFoundException("MPA with this ID not created or invalid Genre ID");
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            genreDao.saveGenresByFilmId(film.getId(), new ArrayList<>(film.getGenres()));
         }
+        return res;
     }
 
-
-
-    // Обновление пользователя;
+    // Обновление фильма
     public Film updateFilm(Film film) {
-
-        if (filmDao.checkFilmId(film.getId())) {
-            return filmDao.updateFilm(film);
-        } else {
-            throw new NotFoundException("User with this ID not found");
-        }
+        validateFilmId(film.getId());
+        validateMpaAndGenres(film);
+        return filmDao.updateFilm(film);
     }
 
+
+    // Удаление фильма
     public void deleteFilm(Long filmId) {
+        validateFilmId(filmId);
         filmDao.deleteFilm(filmId);
     }
 
-    // Получение фильма по id
+    // Получение фильма
     public Film getFilmById(Long filmId) {
 
-        if (filmDao.checkFilmId(filmId)) {
-            return filmDao.getFilmById(filmId);
-        } else {
-            throw new NotFoundException("Film with this ID not found");
-        }
+        validateFilmId(filmId);
+
+        Film res = filmDao.getFilmById(filmId);
+        res.setMpa(mpaDao.getMpaByFilmId(res.getId()));
+        res.setGenres(new HashSet<>(genreDao.getGenresByFilmId(res.getId())));
+        return res;
 
     }
 
-
-    // Получение списка всех пользователей.
+    // Получение всех фильмов
     public List<Film> getAllFilms() {
-        return filmDao.getAllFilms();
+        List<Film> films = filmDao.getAllFilms();
+        for (Film film : films) {
+            film.setMpa(mpaDao.getMpaByFilmId(film.getId()));
+            film.setGenres(new HashSet<>(genreDao.getGenresByFilmId(film.getId())));
+        }
+        return films;
     }
 
-    // User cтавит лайк
+    // Добавление лайка
     public void addLike(Long filmId, Long userId) {
-
-        log.warn("FILM ID CHECK " + filmId);
-
         if (!filmDao.checkFilmId(filmId)) {
             throw new NotFoundException("Film with this ID not found");
         }
         filmDao.addLike(filmId, userId);
     }
 
-    // User удаляет лайк
+    // Удаление лайка
     public void deleteLike(Long filmId, Long userId) {
 
-        if (!filmDao.checkFilmId(filmId)) {
-            throw new NotFoundException("Film with this ID not found");
-        }
-
-       filmDao.deleteLike(filmId, userId);
+        validateFilmId(filmId);
+        filmDao.deleteLike(filmId, userId);
     }
 
-    // Возвращает список из первых count фильмов по количеству лайков.
+    // Получение популярный фильмов
     public List<Film> getPopularFilms(int count) {
+
         if (count == 0) count = 10;
 
-        return filmDao.getPopularFilms(count);
+        List<Film> popularFilms = filmDao.getPopularFilms(count);
+        for (Film film : popularFilms) {
+            film.setMpa(mpaDao.getMpaByFilmId(film.getId()));
+            film.setGenres(new HashSet<>(genreDao.getGenresByFilmId(film.getId())));
+        }
+        return popularFilms;
     }
 
-
+    // Получение списка возрастного рейтинга
     public Mpa getMpa(Long mpaId) {
 
-        MpaDao mpaDao = filmDao.getMpaDao();
         if (mpaDao.checkMpaId(mpaId)) {
             return mpaDao.getMpaById(mpaId);
         } else {
@@ -121,12 +129,14 @@ public class FilmService {
         }
     }
 
+    // Получение всех возрастных рейтингов
     public List<Mpa> getAllMpa() {
-        return filmDao.getMpaDao().getAllMpa();
+        return mpaDao.getAllMpa();
     }
 
+
+    // Получениче жанра по id
     public Genre getGenre(Long genreId) {
-        GenreDao genreDao = filmDao.getGenreDao();
         if (genreDao.checkGenreId(genreId)) {
             return genreDao.getGenreById(genreId);
         } else {
@@ -134,8 +144,9 @@ public class FilmService {
         }
     }
 
+    // Получение всех возрастных рейтингов
     public List<Genre> getAllGenres() {
-        return filmDao.getGenreDao().getAllGenres();
-    }
 
+        return genreDao.getAllGenres();
+    }
 }

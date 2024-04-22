@@ -6,10 +6,6 @@ import java.util.List;
 
 public interface FilmDao {
 
-    GenreDao getGenreDao();
-
-    MpaDao getMpaDao();
-
     Film createFilm(Film film);
 
     Film updateFilm(Film film);

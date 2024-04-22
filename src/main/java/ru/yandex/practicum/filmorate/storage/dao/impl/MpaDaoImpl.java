@@ -36,8 +36,8 @@ public class MpaDaoImpl implements MpaDao {
     @Override
     public Mpa getMpaByFilmId(Long filmId) {
         String sql = "SELECT m.mpa_id, m.name FROM film AS f " +
-                "JOIN mpa AS m ON m.mpa_id = f.mpa_id " +
-                "WHERE f.film_id = ?";
+                     "JOIN mpa AS m ON m.mpa_id = f.mpa_id " +
+                     "WHERE f.film_id = ?";
         Mpa res;
         try {
             res = jdbcTemplate.queryForObject(sql, mapRowMapper, filmId);
