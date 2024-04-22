@@ -85,7 +85,7 @@ public class FilmDaoImpl implements FilmDao {
 
         log.warn("ID = " + generatedId + " " + film.toString());
 
-        genreDao.saveGenresByFilmId((Long) generatedId, film.getGenres().stream().toList());
+        genreDao.saveGenresByFilmId((Long) generatedId, film.getGenres().stream().collect(Collectors.toList()));
         return film;
     }
 
@@ -141,7 +141,6 @@ public class FilmDaoImpl implements FilmDao {
 
         return jdbcTemplate.query(sql, filmRowMapper, count);
     }
-
 
     @Override
     public Boolean checkFilmId(Long filmId) {
