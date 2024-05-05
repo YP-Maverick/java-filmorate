@@ -180,7 +180,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getRecommendations (Long userId) {
+    public List<Film> getRecommendations(Long userId) {
         log.debug("Рекомендации фильмов для пользователя с id {} .", userId);
 
         String sql = "SELECT f.*, "
