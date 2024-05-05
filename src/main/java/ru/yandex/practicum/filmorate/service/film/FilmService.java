@@ -134,4 +134,20 @@ public class FilmService {
         }
         return correctFilms;
     }
+
+    public List<Film> getFilmsBySearch(String query, String by) {
+        if ("director,title".contains(by) || "title,director".contains(by)) {
+            List<Film> filmsWithoutGenresAndDir = filmStorage.getFilmsBySearch(query, by);
+            List<Film> correctFilms = new ArrayList<>();
+            for (Film film : filmsWithoutGenresAndDir) {
+                Set<Genre> genres = genreStorage.getFilmGenres(film.getId());
+                Set<Director> directors = directorStorage.getFilmDirectors(film.getId());
+                Film correctFilm = film.withGenres(genres).withDirectors(directors);
+                correctFilms.add(correctFilm);
+            }
+            return correctFilms;
+        } else {
+            throw new ValidationException("Значения параметра 'by' некорректны");
+        }
+    }
 }

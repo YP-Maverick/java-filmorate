@@ -196,4 +196,28 @@ public class FilmDbStorage implements FilmStorage {
                 + "GROUP BY f.id";
         return jdbcTemplate.query(sql, mapper::makeFilm, userId,userId);
     }
+
+    @Override
+    public List<Film> getFilmsBySearch(String query, String by) {
+        String baseSql = "SELECT f.*, "
+                + "rm.name AS rating_name "
+                + "FROM films f "
+                + "JOIN rating_MPA rm ON rm.ID = f.rating_id ";
+        String joinDirectorSql = "LEFT JOIN film_directors fd ON fd.film_id = f.id " +
+                "LEFT JOIN directors d ON fd.director_id = d.id ";
+
+        switch (by) {
+            case "title":
+                String titleSql = baseSql + "WHERE LOWER(f.name) LIKE ? ORDER BY f.id DESC";
+                return jdbcTemplate.query(titleSql, mapper::makeFilm, "%" + query.toLowerCase() + "%");
+            case "director":
+                String directorSql = baseSql + joinDirectorSql + "WHERE LOWER(d.name) LIKE ? ORDER BY f.id DESC";
+                return jdbcTemplate.query(directorSql, mapper::makeFilm, "%" + query.toLowerCase() + "%");
+            default:
+                String titleAndDirectorSql = baseSql + joinDirectorSql +
+                        "WHERE LOWER(d.name) LIKE ? OR LOWER(f.name) LIKE ? ORDER BY f.id DESC";
+                return jdbcTemplate.query(titleAndDirectorSql, mapper::makeFilm, "%" + query.toLowerCase() + "%",
+                        "%" + query.toLowerCase() + "%");
+        }
+    }
 }
