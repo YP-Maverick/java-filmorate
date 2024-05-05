@@ -135,7 +135,7 @@ public class FilmService {
         return correctFilms;
     }
 
-    public List<Film> getCommonFilms(Long userId, Long friendId){
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
         return filmStorage.getCommonFilms(userId, friendId);
     }
 }
