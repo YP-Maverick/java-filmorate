@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -133,6 +134,22 @@ public class FilmService {
             correctFilms.add(correctFilm);
         }
         return correctFilms;
+    }
+
+    public List<Film> getFilmsBySearch(String query, String by) {
+        if ("director,title".contains(by) || "title,director".contains(by)) {
+            List<Film> filmsWithoutGenresAndDir = filmStorage.getFilmsBySearch(query, by);
+            List<Film> correctFilms = new ArrayList<>();
+            for (Film film : filmsWithoutGenresAndDir) {
+                Set<Genre> genres = genreStorage.getFilmGenres(film.getId());
+                Set<Director> directors = directorStorage.getFilmDirectors(film.getId());
+                Film correctFilm = film.withGenres(genres).withDirectors(directors);
+                correctFilms.add(correctFilm);
+            }
+            return correctFilms;
+        } else {
+            throw new ValidationException("Значения параметра 'by' некорректны");
+        }
     }
 
     public List<Film> getCommonFilms(Long userId, Long friendId) {
