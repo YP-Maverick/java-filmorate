@@ -12,7 +12,6 @@ import ru.yandex.practicum.filmorate.dao.mapper.ModelMapper;
 import ru.yandex.practicum.filmorate.exception.LikeException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.dao.FilmStorage;
 
 import java.util.List;
 
@@ -207,19 +206,20 @@ public class FilmDbStorage implements FilmStorage {
                 + "JOIN rating_MPA rm ON rm.ID = f.rating_id ";
         String joinDirectorSql = "LEFT JOIN film_directors fd ON fd.film_id = f.id " +
                 "LEFT JOIN directors d ON fd.director_id = d.id ";
+        String sql;
+        String parameter = "%" + query.toLowerCase() + "%";
 
         switch (by) {
             case "title":
-                String titleSql = baseSql + "WHERE LOWER(f.name) LIKE ? ORDER BY f.id DESC";
-                return jdbcTemplate.query(titleSql, mapper::makeFilm, "%" + query.toLowerCase() + "%");
+                sql = baseSql + "WHERE LOWER(f.name) LIKE ? ORDER BY f.id DESC";
+                return jdbcTemplate.query(sql, mapper::makeFilm, parameter);
             case "director":
-                String directorSql = baseSql + joinDirectorSql + "WHERE LOWER(d.name) LIKE ? ORDER BY f.id DESC";
-                return jdbcTemplate.query(directorSql, mapper::makeFilm, "%" + query.toLowerCase() + "%");
+                sql = baseSql + joinDirectorSql + "WHERE LOWER(d.name) LIKE ? ORDER BY f.id DESC";
+                return jdbcTemplate.query(sql, mapper::makeFilm, parameter);
             default:
-                String titleAndDirectorSql = baseSql + joinDirectorSql +
+                sql = baseSql + joinDirectorSql +
                         "WHERE LOWER(d.name) LIKE ? OR LOWER(f.name) LIKE ? ORDER BY f.id DESC";
-                return jdbcTemplate.query(titleAndDirectorSql, mapper::makeFilm, "%" + query.toLowerCase() + "%",
-                        "%" + query.toLowerCase() + "%");
+                return jdbcTemplate.query(sql, mapper::makeFilm, parameter, parameter);
         }
     }
 }
