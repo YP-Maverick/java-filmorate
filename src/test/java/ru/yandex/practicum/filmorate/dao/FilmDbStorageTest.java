@@ -95,6 +95,7 @@ public class FilmDbStorageTest {
         assertThat(newFilm)
                 .isNotNull()
                 .usingRecursiveComparison()
+                .ignoringCollectionOrder()
                 .isEqualTo(filmWithCorrectId);
 
         // Проверка метода getFilmById()
@@ -103,6 +104,7 @@ public class FilmDbStorageTest {
         assertThat(savedFilm)
                 .isNotNull()
                 .usingRecursiveComparison()
+                .ignoringCollectionOrder()
                 .isEqualTo(filmWithCorrectId);
 
         // Проверка метода contains()
