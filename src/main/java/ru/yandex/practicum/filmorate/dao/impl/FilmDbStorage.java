@@ -7,6 +7,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.dao.FilmStorage;
 import ru.yandex.practicum.filmorate.dao.mapper.ModelMapper;
 import ru.yandex.practicum.filmorate.exception.LikeException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -14,6 +15,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.dao.FilmStorage;
 
 import java.util.List;
+
 
 @AllArgsConstructor
 @Repository
@@ -195,6 +197,30 @@ public class FilmDbStorage implements FilmStorage {
                 + "ORDER BY COUNT(film_id) DESC LIMIT 10)"
                 + "GROUP BY f.id";
         return jdbcTemplate.query(sql, mapper::makeFilm, userId,userId);
+    }
+
+    @Override
+    public List<Film> getFilmsBySearch(String query, String by) {
+        String baseSql = "SELECT f.*, "
+                + "rm.name AS rating_name "
+                + "FROM films f "
+                + "JOIN rating_MPA rm ON rm.ID = f.rating_id ";
+        String joinDirectorSql = "LEFT JOIN film_directors fd ON fd.film_id = f.id " +
+                "LEFT JOIN directors d ON fd.director_id = d.id ";
+
+        switch (by) {
+            case "title":
+                String titleSql = baseSql + "WHERE LOWER(f.name) LIKE ? ORDER BY f.id DESC";
+                return jdbcTemplate.query(titleSql, mapper::makeFilm, "%" + query.toLowerCase() + "%");
+            case "director":
+                String directorSql = baseSql + joinDirectorSql + "WHERE LOWER(d.name) LIKE ? ORDER BY f.id DESC";
+                return jdbcTemplate.query(directorSql, mapper::makeFilm, "%" + query.toLowerCase() + "%");
+            default:
+                String titleAndDirectorSql = baseSql + joinDirectorSql +
+                        "WHERE LOWER(d.name) LIKE ? OR LOWER(f.name) LIKE ? ORDER BY f.id DESC";
+                return jdbcTemplate.query(titleAndDirectorSql, mapper::makeFilm, "%" + query.toLowerCase() + "%",
+                        "%" + query.toLowerCase() + "%");
+        }
     }
 
     @Override
