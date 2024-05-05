@@ -140,7 +140,7 @@ public class DirectorDbStorage implements DirectorStorage {
 
         List<Long> directorDbIdList = jdbcTemplate.query(sql, directorIdList.toArray(),
                 (rs, rowNum) -> rs.getLong("id"));
-        if(directorDbIdList.size() < directorIdList.size()) {
+        if (directorDbIdList.size() < directorIdList.size()) {
             directorDbIdList.forEach(directorDbIdList::remove);
             Long directorId = directorDbIdList.stream().findFirst().get();
             log.error("Режиссёра с id {} нет в БД.", directorId);
