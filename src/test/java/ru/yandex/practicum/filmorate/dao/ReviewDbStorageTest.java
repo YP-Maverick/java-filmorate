@@ -1,10 +1,12 @@
 package ru.yandex.practicum.filmorate.dao;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -12,13 +14,15 @@ import ru.yandex.practicum.filmorate.dao.impl.FilmDbStorage;
 import ru.yandex.practicum.filmorate.dao.impl.ReviewDbStorage;
 import ru.yandex.practicum.filmorate.dao.impl.UserDbStorage;
 import ru.yandex.practicum.filmorate.dao.mapper.ModelMapper;
-import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.RatingMpa;
+import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.User;
+
 
 import java.time.LocalDate;
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import java.util.Collections;
+import java.util.List;
 
 @Slf4j
 @JdbcTest
@@ -39,184 +43,72 @@ public class ReviewDbStorageTest {
 
     @BeforeEach
     public void beforeEach() {
-
         reviewStorage = new ReviewDbStorage(jdbcTemplate, modelMapper);
         filmStorage = new FilmDbStorage(jdbcTemplate, modelMapper);
         userStorage = new UserDbStorage(jdbcTemplate, modelMapper);
-
-        prepareFilms();
-        prepareUsers();
     }
 
-    private void prepareFilms() {
-
-        Film film1 = Film.builder()
-                .name("Inception")
-                .description("A thief who enters the dreams of others to steal their secrets")
-                .releaseDate(LocalDate.of(2010, 7, 16))
-                .duration(148)
-                .mpa(RatingMpa.builder().id(2).build())
-                .build();
-
-        Film film2 = Film.builder()
-                .name("The Shawshank Redemption")
-                .description("Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.")
-                .releaseDate(LocalDate.of(1994, 10, 14))
-                .duration(142)
-                .mpa(RatingMpa.builder().id(2).build())
-                .build();
-
-        Film film3 = Film.builder()
-                .name("Finding Nemo")
-                .description("After his son is captured in the Great Barrier Reef and taken to Sydney, a timid clownfish sets out on a journey to bring him home.")
-                .releaseDate(LocalDate.of(2003, 5, 30))
-                .duration(100)
-                .mpa(RatingMpa.builder().id(2).build())
-                .build();
-
-        filmStorage.create(film1);
-        filmStorage.create(film2);
-        filmStorage.create(film3);
+    private User createUser(String email, String login, String name, LocalDate birthday) {
+        User user = User.builder().id(0L).email(email).login(login).name(name).birthday(birthday).build();
+        return userStorage.create(user);
     }
 
-    private void prepareUsers() {
-
-        User user1 = User.builder()
-                .id(0L)
-                .email("user1@example.com")
-                .login("user1")
-                .name("Alice")
-                .birthday(LocalDate.of(1990, 5, 15))
-                .build();
-
-        User user2 = User.builder()
-                .id(0L)
-                .email("user2@example.com")
-                .login("user2")
-                .name("Bob")
-                .birthday(LocalDate.of(1985, 8, 20))
-                .build();
-
-        User user3 = User.builder()
-                .id(0L)
-                .email("user3@example.com")
-                .login("user3")
-                .name("Charlie")
-                .birthday(LocalDate.of(1995, 3, 10))
-                .build();
-
-        User user4 = User.builder()
-                .id(0L)
-                .email("user4@example.com")
-                .login("user4")
-                .name("David")
-                .birthday(LocalDate.of(1988, 11, 25))
-                .build();
-
-        userStorage.create(user1);
-        userStorage.create(user2);
-        userStorage.create(user3);
-        userStorage.create(user4);
+    private Film createFilm(String name, String description, LocalDate releaseDate, int duration, int mpaId) {
+        Film film = Film.builder().id(0L).name(name).description(description).releaseDate(releaseDate)
+                .duration(duration).mpa(RatingMpa.builder().id(mpaId).build()).build();
+        return filmStorage.create(film);
     }
 
     @Test
-    public void testCreateReview() {
+    public void testCreateAndGetReviewFlow() {
+        User user1 = createUser("user1@example.com", "user1", "Alice", LocalDate.of(1990, 5, 15));
+        Film film1 = createFilm("Inception", "A thief who enters the dreams of others to steal their secrets",
+                LocalDate.of(2010, 7, 16), 148, 2);
 
-        Review review = Review.builder()
-                .content("Great Movie!")
-                .isPositive(true)
-                .userId(1L)
-                .filmId(3L)
-                .build();
-
+        Review review = Review.builder().content("Great Movie!").isPositive(true).userId(user1.getId()).filmId(film1.getId()).build();
         Review createdReview = reviewStorage.createReview(review);
         assertNotNull(createdReview);
         assertNotNull(createdReview.getId());
         assertEquals(review.getContent(), createdReview.getContent());
-    }
 
-    @Test
-    public void testGetReview() {
-
-        Review review = Review.builder()
-                .content("Great Movie!")
-                .isPositive(true)
-                .userId(1L)
-                .filmId(1L)
-                .build();
-
-        Review createdReview = reviewStorage.createReview(review);
         Review foundReview = reviewStorage.getReview(createdReview.getId());
         assertNotNull(foundReview);
         assertEquals("Great Movie!", foundReview.getContent());
     }
 
     @Test
-    public void testUpdateReview() {
+    public void testUpdateAndDeleteReview() {
+        User user2 = createUser("user2@example.com", "user2", "Bob", LocalDate.of(1992, 8, 23));
+        Film film2 = createFilm("Avatar", "A marine on an alien planet", LocalDate.of(2009, 12, 18), 162, 3);
 
-        Review review = Review.builder()
-                .content("content")
-                .isPositive(true)
-                .userId(2L)
-                .filmId(1L)
-                .build();
-
+        Review review = Review.builder().content("Amazing visuals").isPositive(true).userId(user2.getId()).filmId(film2.getId()).build();
         Review createdReview = reviewStorage.createReview(review);
 
-        Review newReview = Review.builder()
-                .id(createdReview.getId())
-                .content("Updated content")
-                .isPositive(false)
-                .build();
-        Review updatedReview = reviewStorage.updateReview(newReview);
+        Review updateInfo = Review.builder().id(createdReview.getId()).content("Updated content").isPositive(false).build();
+        Review updatedReview = reviewStorage.updateReview(updateInfo);
 
         assertNotNull(updatedReview);
         assertEquals("Updated content", updatedReview.getContent());
-    }
 
-    @Test
-    public void testDeleteReview() {
-        Review review = Review.builder()
-                .content("fff")
-                .isPositive(true)
-                .userId(3L)
-                .filmId(3L)
-                .build();
-
-        Review createdReview = reviewStorage.createReview(review);
-
-        reviewStorage.deleteReview(createdReview.getId());
+        reviewStorage.deleteReview(updatedReview.getId());
         assertEquals(Collections.EMPTY_LIST, reviewStorage.getAllReviews());
     }
 
     @Test
     public void testGetAllReviews() {
-        Review review1 = Review.builder()
-                .content("Great Movie!")
-                .isPositive(true)
-                .userId(1L)
-                .filmId(1L)
-                .build();
+        User user3 = createUser("user3@example.com", "user3", "Charlie", LocalDate.of(1985, 9, 19));
+        Film film3 = createFilm("The Matrix", "A hacker learns about the true nature of his reality and his role in the war against its controllers",
+                LocalDate.of(1999, 3, 31), 136, 4);
 
-        Review review2 = Review.builder()
-                .content("Bad Movie!")
-                .isPositive(false)
-                .userId(1L)
-                .filmId(2L)
-                .build();
-
-        Review review3 = Review.builder()
-                .content("Great Movie!")
-                .isPositive(true)
-                .userId(1L)
-                .filmId(3L)
-                .build();
+        Review review1 = Review.builder().content("Great Movie!").isPositive(true).userId(user3.getId()).filmId(film3.getId()).build();
+        Review review2 = Review.builder().content("Bad Movie!").isPositive(false).userId(user3.getId()).filmId(film3.getId()).build();
+        Review review3 = Review.builder().content("Awesome!").isPositive(true).userId(user3.getId()).filmId(film3.getId()).build();
 
         List<Review> reviews = List.of(review1, review2, review3);
 
         reviews.forEach(review -> {
-            Review createdRev = reviewStorage.createReview(review);
-            review.withId(createdRev.getId());
+            Review createdReview = reviewStorage.createReview(review);
+            review.withId(createdReview.getId());
         });
 
         assertEquals(reviews.size(), reviewStorage.getAllReviews().size());
