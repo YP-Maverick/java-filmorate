@@ -151,4 +151,8 @@ public class FilmService {
             throw new ValidationException("Значения параметра 'by' некорректны");
         }
     }
+
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        return filmStorage.getCommonFilms(userId, friendId);
+    }
 }
