@@ -7,8 +7,10 @@ import ru.yandex.practicum.filmorate.dao.EventStorage;
 import ru.yandex.practicum.filmorate.dao.FriendsStorage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Event;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.dao.UserStorage;
+import ru.yandex.practicum.filmorate.service.film.FilmService;
 
 import java.util.*;
 
@@ -19,6 +21,7 @@ public class UserService {
     private final UserStorage userStorage;
     private final FriendsStorage friendsStorage;
     private final EventStorage eventStorage;
+    private  final FilmService filmService;
 
     private void checkId(Long userId) {
         if (!userStorage.contains(userId)) {
@@ -74,5 +77,9 @@ public class UserService {
     public List<Event> getAllEvents(Long userId) {
         userStorage.getUserById(userId);
         return eventStorage.getAll(userId);
+    }
+
+    public List<Film> getRecommendations(Long userId) {
+        return filmService.getRecommendations(userId);
     }
 }

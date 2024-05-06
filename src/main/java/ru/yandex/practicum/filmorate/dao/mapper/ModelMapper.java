@@ -71,7 +71,6 @@ public class ModelMapper {
                 .build();
     }
 
-
     public Director makeDirector(ResultSet rs, int rowNum) throws SQLException {
         return Director.builder()
                 .id(rs.getLong("id"))

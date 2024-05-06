@@ -66,8 +66,21 @@ public class FilmController {
     @GetMapping("/director/{directorId}")
     public List<Film> getFilmsByDirector(@PathVariable
                                          @Positive(message = "Id режиссёра должен быть положительным")
-                                             Long directorId,
+                                         Long directorId,
                                          @RequestParam String sortBy) {
         return filmService.getFilmsByDirector(directorId, sortBy);
+    }
+
+    @GetMapping("/search")
+    public List<Film> getFilmsBySearch(@RequestParam(required = false, defaultValue = "") String query,
+                                       @RequestParam(required = false, defaultValue = "title") String by) {
+        return filmService.getFilmsBySearch(query, by);
+    }
+
+    @GetMapping("/common")
+    public List<Film> getCommonFilms(
+            @RequestParam @Positive(message = "Параметр userId должен быть положительным") Long userId,
+            @RequestParam @Positive(message = "Параметр friendId должен быть положительным") Long friendId) {
+        return filmService.getCommonFilms(userId, friendId);
     }
 }

@@ -7,13 +7,14 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.dao.FilmStorage;
 import ru.yandex.practicum.filmorate.dao.mapper.ModelMapper;
 import ru.yandex.practicum.filmorate.exception.LikeException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.dao.FilmStorage;
 
 import java.util.List;
+
 
 @AllArgsConstructor
 @Repository
@@ -177,5 +178,67 @@ public class FilmDbStorage implements FilmStorage {
             default:
                 return jdbcTemplate.query(baseSql, mapper::makeFilm, directorId);
         }
+    }
+
+    @Override
+    public List<Film> getRecommendations(Long userId) {
+        log.debug("Рекомендации фильмов для пользователя с id {} .", userId);
+
+        String sql = "SELECT f.*, "
+                + "rm.name AS rating_name "
+                + "FROM films f "
+                + "JOIN rating_MPA rm ON rm.ID = f.rating_id "
+                + "JOIN film_likes fl ON f.id = fl.film_id "
+                + "WHERE f.id NOT IN (SELECT film_id FROM film_likes WHERE user_id = ?) "
+                + "AND fl.user_id IN (SELECT user_id FROM film_likes "
+                + "WHERE film_id IN (SELECT film_id FROM film_likes WHERE user_id = ?) "
+                + "GROUP BY user_id "
+                + "ORDER BY COUNT(film_id) DESC LIMIT 10)"
+                + "GROUP BY f.id";
+        return jdbcTemplate.query(sql, mapper::makeFilm, userId, userId);
+    }
+
+    @Override
+    public List<Film> getFilmsBySearch(String query, String by) {
+        String baseSql = "SELECT f.*, "
+                + "rm.name AS rating_name "
+                + "FROM films f "
+                + "JOIN rating_MPA rm ON rm.ID = f.rating_id ";
+        String joinDirectorSql = "LEFT JOIN film_directors fd ON fd.film_id = f.id " +
+                "LEFT JOIN directors d ON fd.director_id = d.id ";
+        String sql;
+        String parameter = "%" + query.toLowerCase() + "%";
+
+        switch (by) {
+            case "title":
+                sql = baseSql + "WHERE LOWER(f.name) LIKE ? ORDER BY f.id DESC";
+                return jdbcTemplate.query(sql, mapper::makeFilm, parameter);
+            case "director":
+                sql = baseSql + joinDirectorSql + "WHERE LOWER(d.name) LIKE ? ORDER BY f.id DESC";
+                return jdbcTemplate.query(sql, mapper::makeFilm, parameter);
+            default:
+                sql = baseSql + joinDirectorSql +
+                        "WHERE LOWER(d.name) LIKE ? OR LOWER(f.name) LIKE ? ORDER BY f.id DESC";
+                return jdbcTemplate.query(sql, mapper::makeFilm, parameter, parameter);
+        }
+    }
+
+    @Override
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        log.debug("Получен запрос вывести список общих фильмов пользователя с id {} и пользователя с id {} отсортированных по популярности", userId, friendId);
+
+        String sql = "SELECT f.*, "
+                + "rm.name AS rating_name "
+                + "FROM films f "
+                + "JOIN rating_MPA rm ON rm.ID = f.rating_id "
+                + "WHERE f.id IN ( "
+                + "    SELECT fl1.film_id "
+                + "    FROM film_likes fl1 "
+                + "    JOIN film_likes fl2 ON fl1.film_id = fl2.film_id "
+                + "    WHERE fl1.user_id = ? AND fl2.user_id = ? "
+                + ") "
+                + "ORDER BY f.likes DESC";
+
+        return jdbcTemplate.query(sql, mapper::makeFilm, userId, friendId);
     }
 }
