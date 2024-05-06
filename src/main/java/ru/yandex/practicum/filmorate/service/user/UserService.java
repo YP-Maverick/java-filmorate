@@ -21,7 +21,7 @@ public class UserService {
     private final UserStorage userStorage;
     private final FriendsStorage friendsStorage;
     private final EventStorage eventStorage;
-    private  final FilmService filmService;
+    private final FilmService filmService;
 
     private void checkId(Long userId) {
         if (!userStorage.contains(userId)) {

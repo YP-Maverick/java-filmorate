@@ -26,7 +26,7 @@ public class ReviewService {
 
         if (!reviewStorage.contains(reviewId)) {
             log.error("Неверно указан id отзыва: {}.", reviewId);
-            throw new NotFoundException(String.format("Отзыва с id %d не существует.",  reviewId));
+            throw new NotFoundException(String.format("Отзыва с id %d не существует.", reviewId));
         }
     }
 
@@ -34,7 +34,7 @@ public class ReviewService {
 
         if (!filmStorage.contains(filmId)) {
             log.error("Неверно указан id фильма: {}.", filmId);
-            throw new NotFoundException(String.format("Фильма с id %d не существует.",  filmId));
+            throw new NotFoundException(String.format("Фильма с id %d не существует.", filmId));
         }
     }
 
@@ -42,7 +42,7 @@ public class ReviewService {
 
         if (!userStorage.contains(userId)) {
             log.error("Неверно указан id пользователя: {}.", userId);
-            throw new NotFoundException(String.format("Пользователя с id %d не существует.",  userId));
+            throw new NotFoundException(String.format("Пользователя с id %d не существует.", userId));
         }
     }
 
