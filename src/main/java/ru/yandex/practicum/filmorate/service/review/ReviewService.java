@@ -3,10 +3,13 @@ package ru.yandex.practicum.filmorate.service.review;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.EventStorage;
 import ru.yandex.practicum.filmorate.dao.FilmStorage;
 import ru.yandex.practicum.filmorate.dao.ReviewStorage;
 import ru.yandex.practicum.filmorate.dao.UserStorage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.EventOperation;
+import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Review;
 
 import java.util.List;
@@ -19,12 +22,13 @@ public class ReviewService {
     private final UserStorage userStorage;
     private final ReviewStorage reviewStorage;
     private final FilmStorage filmStorage;
+    private final EventStorage eventStorage;
 
     private void checkReviewId(Long reviewId) {
 
         if (!reviewStorage.contains(reviewId)) {
             log.error("Неверно указан id отзыва: {}.", reviewId);
-            throw new NotFoundException(String.format("Отзыва с id %d не существует.",  reviewId));
+            throw new NotFoundException(String.format("Отзыва с id %d не существует.", reviewId));
         }
     }
 
@@ -32,7 +36,7 @@ public class ReviewService {
 
         if (!filmStorage.contains(filmId)) {
             log.error("Неверно указан id фильма: {}.", filmId);
-            throw new NotFoundException(String.format("Фильма с id %d не существует.",  filmId));
+            throw new NotFoundException(String.format("Фильма с id %d не существует.", filmId));
         }
     }
 
@@ -40,26 +44,30 @@ public class ReviewService {
 
         if (!userStorage.contains(userId)) {
             log.error("Неверно указан id пользователя: {}.", userId);
-            throw new NotFoundException(String.format("Пользователя с id %d не существует.",  userId));
+            throw new NotFoundException(String.format("Пользователя с id %d не существует.", userId));
         }
     }
 
     // Создание отзыва
     public Review createReview(Review review) {
-
         checkUserId(review.getUserId());
         checkFilmId(review.getFilmId());
-
-        return reviewStorage.createReview(review);
+        Review review1 = reviewStorage.createReview(review);
+        eventStorage.add(EventType.REVIEW.toString(), EventOperation.ADD.toString(), review1.getUserId(), review1.getId());
+        return review1;
     }
 
     // Обновление отзыва
     public Review updateReview(Review review) {
-        return reviewStorage.updateReview(review);
+        Review review1 = reviewStorage.updateReview(review);
+        eventStorage.add(EventType.REVIEW.toString(), EventOperation.UPDATE.toString(), review1.getUserId(), review1.getId());
+        return review1;
     }
 
     //Удаление отзыва по его идентификатору
     public Review deleteReview(Long id) {
+        Review review = reviewStorage.getReview(id);
+        eventStorage.add(EventType.REVIEW.toString(), EventOperation.REMOVE.toString(), review.getUserId(), review.getId());
         return reviewStorage.deleteReview(id);
     }
 
@@ -89,7 +97,6 @@ public class ReviewService {
 
         checkUserId(userId);
         checkReviewId(reviewId);
-
         reviewStorage.addLike(reviewId, userId);
     }
 
@@ -98,7 +105,6 @@ public class ReviewService {
 
         checkUserId(userId);
         checkReviewId(reviewId);
-
         reviewStorage.deleteLike(reviewId, userId);
     }
 
@@ -107,7 +113,6 @@ public class ReviewService {
 
         checkUserId(userId);
         checkReviewId(reviewId);
-
         reviewStorage.addDislike(reviewId, userId);
     }
 
@@ -116,7 +121,6 @@ public class ReviewService {
 
         checkUserId(userId);
         checkReviewId(reviewId);
-
         reviewStorage.deleteDislike(reviewId, userId);
     }
 }

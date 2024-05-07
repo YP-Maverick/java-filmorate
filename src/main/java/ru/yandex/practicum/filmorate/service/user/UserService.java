@@ -3,10 +3,10 @@ package ru.yandex.practicum.filmorate.service.user;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.EventStorage;
 import ru.yandex.practicum.filmorate.dao.FriendsStorage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.dao.UserStorage;
 import ru.yandex.practicum.filmorate.service.film.FilmService;
 
@@ -18,26 +18,27 @@ import java.util.*;
 public class UserService {
     private final UserStorage userStorage;
     private final FriendsStorage friendsStorage;
-    private  final FilmService filmService;
+    private final EventStorage eventStorage;
+    private final FilmService filmService;
 
     private void checkId(Long userId) {
         if (!userStorage.contains(userId)) {
             log.error("Неверно указан id пользователя: {}.", userId);
-            throw new NotFoundException(String.format("Пользователя с id %d не существует.",  userId));
+            throw new NotFoundException(String.format("Пользователя с id %d не существует.", userId));
         }
     }
 
     public void addFriend(Long userId, Long friendId) {
         checkId(userId);
         checkId(friendId);
-
         friendsStorage.addFriend(userId, friendId);
+        eventStorage.add(EventType.FRIEND.toString(), EventOperation.ADD.toString(), userId, friendId);
     }
 
     public long deleteFriend(Long userId, Long friendId) {
         checkId(userId);
         checkId(friendId);
-
+        eventStorage.add(EventType.FRIEND.toString(), EventOperation.REMOVE.toString(), userId, friendId);
         return friendsStorage.deleteFriend(userId, friendId);
     }
 
@@ -69,6 +70,11 @@ public class UserService {
 
     public List<User> findAllUsers() {
         return userStorage.findAllUsers();
+    }
+
+    public List<Event> getAllEvents(Long userId) {
+        userStorage.getUserById(userId);
+        return eventStorage.getAll(userId);
     }
 
     public List<Film> getRecommendations(Long userId) {
