@@ -19,13 +19,13 @@ public class Event {
     Long entityId;
 
     public Map<String, Object> toMap() {
-        Map<String, Object> values = new HashMap<>();
-        values.put("event_id", eventId);
-        values.put("event_type", eventType);
-        values.put("operation", operation);
-        values.put("event_timestamp", timestamp);
-        values.put("user_id", userId);
-        values.put("entity_id", entityId);
-        return values;
+        Map<String, Object> eventDto = new HashMap<>();
+        eventDto.put("event_id", eventId);
+        eventDto.put("event_type", eventType);
+        eventDto.put("operation", operation);
+        eventDto.put("event_timestamp", timestamp);
+        eventDto.put("user_id", userId);
+        eventDto.put("entity_id", entityId);
+        return eventDto;
     }
 }
