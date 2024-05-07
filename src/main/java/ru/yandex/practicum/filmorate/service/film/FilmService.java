@@ -6,13 +6,11 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.dao.FilmStorage;
+import ru.yandex.practicum.filmorate.dao.UserStorage;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @AllArgsConstructor
 @Service
@@ -22,6 +20,7 @@ public class FilmService {
     private final UserStorage userStorage;
     private final GenreStorage genreStorage;
     private final RatingMpaStorage ratingMpaStorage;
+    private final EventStorage eventStorage;
     private final DirectorStorage directorStorage;
 
     private void checkFilmAndUserId(Long filmId, Long userId) {
@@ -36,14 +35,14 @@ public class FilmService {
 
     public void addLike(Long filmId, Long userId) {
         checkFilmAndUserId(filmId, userId);
-
         filmStorage.addLike(filmId, userId);
+        eventStorage.add(EventType.LIKE.toString(), EventOperation.ADD.toString(), userId, filmId);
     }
 
     public void deleteLike(Long filmId, Long userId) {
         checkFilmAndUserId(filmId, userId);
-
         filmStorage.deleteLike(filmId, userId);
+        eventStorage.add(EventType.LIKE.toString(), EventOperation.REMOVE.toString(), userId, filmId);
     }
 
     public List<Film> getTopFilms(Integer count, Integer genreId, String year) {

@@ -48,6 +48,17 @@ public class ModelMapper {
                 .build();
     }
 
+    public Event makeEvent(ResultSet rs, int rowNum) throws SQLException {
+        return Event.builder()
+                .eventId(rs.getLong("event_id"))
+                .entityId(rs.getLong("entity_id"))
+                .userId(rs.getLong("user_id"))
+                .timestamp(rs.getLong("event_timestamp"))
+                .eventType(rs.getString("event_type"))
+                .operation(rs.getString("operation"))
+                .build();
+    }
+
     public Review makeReview(ResultSet rs, int rowNum) throws SQLException {
         return Review.builder()
                 .id(rs.getLong("id"))
