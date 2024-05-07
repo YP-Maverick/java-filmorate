@@ -37,7 +37,7 @@ public class EventDbStorage implements EventStorage {
     }
 
     public List<Event> getAll(Long id) {
-        String sqlQuery = "SELECT EVENT_ID, \"TYPE\", OPERATION, EVENT_TIMESTAMP, USER_ID, ENTITY_ID FROM PUBLIC.EVENTS WHERE USER_ID = ?";
+        String sqlQuery = "SELECT * FROM PUBLIC.EVENTS WHERE USER_ID = ?";
         return jdbcTemplate.query(sqlQuery, mapper::makeEvent, id);
     }
 }

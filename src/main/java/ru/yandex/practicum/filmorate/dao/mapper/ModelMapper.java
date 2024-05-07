@@ -54,7 +54,7 @@ public class ModelMapper {
                 .entityId(rs.getLong("entity_id"))
                 .userId(rs.getLong("user_id"))
                 .timestamp(rs.getLong("event_timestamp"))
-                .eventType(rs.getString("type"))
+                .eventType(rs.getString("event_type"))
                 .operation(rs.getString("operation"))
                 .build();
     }

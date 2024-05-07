@@ -8,6 +8,8 @@ import ru.yandex.practicum.filmorate.dao.FilmStorage;
 import ru.yandex.practicum.filmorate.dao.ReviewStorage;
 import ru.yandex.practicum.filmorate.dao.UserStorage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.EventOperation;
+import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Review;
 
 import java.util.List;
@@ -51,21 +53,21 @@ public class ReviewService {
         checkUserId(review.getUserId());
         checkFilmId(review.getFilmId());
         Review review1 = reviewStorage.createReview(review);
-        eventStorage.add("REVIEW", "ADD", review1.getUserId(), review1.getId());
+        eventStorage.add(EventType.REVIEW.toString(), EventOperation.ADD.toString(), review1.getUserId(), review1.getId());
         return review1;
     }
 
     // Обновление отзыва
     public Review updateReview(Review review) {
         Review review1 = reviewStorage.updateReview(review);
-        eventStorage.add("REVIEW", "UPDATE", review1.getUserId(), review1.getId());
+        eventStorage.add(EventType.REVIEW.toString(), EventOperation.UPDATE.toString(), review1.getUserId(), review1.getId());
         return review1;
     }
 
     //Удаление отзыва по его идентификатору
     public Review deleteReview(Long id) {
         Review review = reviewStorage.getReview(id);
-        eventStorage.add("REVIEW", "REMOVE", review.getUserId(), review.getId());
+        eventStorage.add(EventType.REVIEW.toString(), EventOperation.REMOVE.toString(), review.getUserId(), review.getId());
         return reviewStorage.deleteReview(id);
     }
 
