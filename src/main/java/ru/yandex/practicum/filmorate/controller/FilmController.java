@@ -54,7 +54,7 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public List<Film> getTopFilms(@RequestParam(required = false, defaultValue = "10")
+    public List<Film> getTopFilms(@RequestParam(defaultValue = "10")
                                   @Positive(message = "Параметр count должен быть положительным") Integer count,
                                   @RequestParam(required = false)
                                   @Positive(message = "Параметр genreId должен быть положительным") Integer genreId,
