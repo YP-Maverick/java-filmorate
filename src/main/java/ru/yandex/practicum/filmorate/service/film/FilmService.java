@@ -46,15 +46,7 @@ public class FilmService {
     }
 
     public List<Film> getTopFilms(Integer count, Integer genreId, String year) {
-        List<Film> filmsWithoutGenresAndDir = filmStorage.getTopFilms(count, genreId, year);
-        List<Film> correctFilms = new ArrayList<>();
-        for (Film film : filmsWithoutGenresAndDir) {
-            Set<Genre> genres = genreStorage.getFilmGenres(film.getId());
-            Set<Director> directors = directorStorage.getFilmDirectors(film.getId());
-            Film correctFilm = film.withGenres(genres).withDirectors(directors);
-            correctFilms.add(correctFilm);
-        }
-        return correctFilms;
+        return filmStorage.getTopFilms(count, genreId, year);
     }
 
     public Film createFilm(Film film) {

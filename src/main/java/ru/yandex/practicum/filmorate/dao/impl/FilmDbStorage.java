@@ -4,16 +4,22 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.FilmStorage;
 import ru.yandex.practicum.filmorate.dao.mapper.ModelMapper;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
+@SuppressWarnings("checkstyle:Regexp")
 @AllArgsConstructor
 @Repository
 @Primary
@@ -142,20 +148,24 @@ public class FilmDbStorage implements FilmStorage {
                 + "WHERE (YEAR(f.release_date) = ?) %s (fg.genre_id = ?) "
                 + "ORDER BY likes DESC LIMIT ?";
 
+        List<Film> films;
+
         if (year == null && genreId == null) {
             String sql = "SELECT f.*, "
                     + "rm.name AS rating_name "
                     + "FROM films f "
                     + "JOIN rating_MPA rm ON rm.ID = f.rating_id "
                     + "ORDER BY likes DESC LIMIT ?";
-            return jdbcTemplate.query(sql, mapper::makeFilm, count);
+            films = jdbcTemplate.query(sql, mapper::makeFilm, count);
         } else if (year == null || genreId == null) {
             String nonStrictSql = String.format(baseSql, "OR");
-            return jdbcTemplate.query(nonStrictSql, mapper::makeFilm, year, genreId, count);
+            films = jdbcTemplate.query(nonStrictSql, mapper::makeFilm, year, genreId, count);
         } else {
             String strictSql = String.format(baseSql, "AND");
-            return jdbcTemplate.query(strictSql, mapper::makeFilm, year, genreId, count);
+            films = jdbcTemplate.query(strictSql, mapper::makeFilm, year, genreId, count);
         }
+
+        return finishFilm(films);
     }
 
     @Override
@@ -238,5 +248,75 @@ public class FilmDbStorage implements FilmStorage {
                 + "ORDER BY f.likes DESC";
 
         return jdbcTemplate.query(sql, mapper::makeFilm, userId, friendId);
+    }
+
+
+    private Map<Long, List<Genre>> finishGenresFilms(Set<Long> filmIds) {
+        String sql = "SELECT genres.id, genres.name, fg.film_id FROM genres " +
+                "LEFT JOIN film_genres fg ON genres.id = fg.genre_id " +
+                "WHERE fg.film_id IN (:filmIds)";
+
+        NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+        MapSqlParameterSource parameters = new MapSqlParameterSource("filmIds", filmIds);
+
+        Map<Long, List<Genre>> filmGenresMap = new HashMap<>();
+
+        namedParameterJdbcTemplate.query(sql, parameters, rs -> {
+                Long filmId = rs.getLong("film_id");
+
+                Genre genre = Genre.builder()
+                        .id(rs.getInt("id"))
+                        .name(rs.getString("name"))
+                        .build();
+
+                filmGenresMap.computeIfAbsent(filmId, k -> new ArrayList<>())
+                        .add(genre);
+        });
+
+        return filmGenresMap;
+    }
+
+    private Map<Long, List<Director>> finishDirectorsFilms(Set<Long> filmIds) {
+        String sql = "SELECT directors.id, directors.name, fd.film_id FROM directors " +
+                "LEFT JOIN film_directors fd ON directors.id = fd.director_id " +
+                "WHERE fd.film_id IN (:filmIds)";
+
+        NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+        MapSqlParameterSource parameters = new MapSqlParameterSource("filmIds", filmIds);
+
+        Map<Long, List<Director>> filmDirectorsMap = new HashMap<>();
+
+        namedParameterJdbcTemplate.query(sql, parameters, rs -> {
+                Long filmId = rs.getLong("film_id");
+
+                Director director = Director.builder()
+                        .id(rs.getLong("id"))
+                        .name(rs.getString("name"))
+                        .build();
+
+                filmDirectorsMap.computeIfAbsent(filmId, k -> new ArrayList<>())
+                        .add(director);
+        });
+
+        return filmDirectorsMap;
+    }
+
+    private List<Film> finishFilm(List<Film> films) {
+        Set<Long> filmIds = films.stream()
+                .map(Film::getId)
+                .collect(Collectors.toSet());
+
+        Map<Long, List<Genre>> filmGenresMap = finishGenresFilms(filmIds);
+        Map<Long, List<Director>> filmDirectorsMap = finishDirectorsFilms(filmIds);
+
+        return films.stream().map(film -> {
+            List<Genre> genres = filmGenresMap.getOrDefault(film.getId(), new ArrayList<>());
+            film = film.withGenres(new HashSet<>(genres));
+
+            List<Director> directors = filmDirectorsMap.getOrDefault(film.getId(), new ArrayList<>());
+            film = film.withDirectors(new HashSet<>(directors));
+
+            return film;
+        }).collect(Collectors.toList());
     }
 }
