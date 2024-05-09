@@ -81,15 +81,7 @@ public class FilmService {
     }
 
     public List<Film> findAllFilms() {
-        List<Film> filmsWithoutGenresAndDir = filmStorage.findAllFilms();
-        List<Film> correctFilms = new ArrayList<>();
-        for (Film film : filmsWithoutGenresAndDir) {
-            Set<Genre> genres = genreStorage.getFilmGenres(film.getId());
-            Set<Director> directors = directorStorage.getFilmDirectors(film.getId());
-            Film correctFilm = film.withGenres(genres).withDirectors(directors);
-            correctFilms.add(correctFilm);
-        }
-        return correctFilms;
+        return filmStorage.findAllFilms();
     }
 
     public Film getFilmById(Long id) {
@@ -104,40 +96,16 @@ public class FilmService {
         // Проверка directorId
         directorStorage.getById(directorId);
 
-        List<Film> filmsWithoutGenresAndDir = filmStorage.getFilmsByDirector(directorId, sortBy);
-        List<Film> correctFilms = new ArrayList<>();
-        for (Film film : filmsWithoutGenresAndDir) {
-            Set<Genre> genres = genreStorage.getFilmGenres(film.getId());
-            Set<Director> directors = directorStorage.getFilmDirectors(film.getId());
-            Film correctFilm = film.withGenres(genres).withDirectors(directors);
-            correctFilms.add(correctFilm);
-        }
-        return correctFilms;
+        return filmStorage.getFilmsByDirector(directorId, sortBy);
     }
 
     public List<Film> getRecommendations(Long userId) {
-        List<Film> filmsWithoutGenresAndDir = filmStorage.getRecommendations(userId);
-        List<Film> correctFilms = new ArrayList<>();
-        for (Film film : filmsWithoutGenresAndDir) {
-            Set<Genre> genres = genreStorage.getFilmGenres(film.getId());
-            Set<Director> directors = directorStorage.getFilmDirectors(film.getId());
-            Film correctFilm = film.withGenres(genres).withDirectors(directors);
-            correctFilms.add(correctFilm);
-        }
-        return correctFilms;
+        return filmStorage.getRecommendations(userId);
     }
 
     public List<Film> getFilmsBySearch(String query, String by) {
         if ("director,title".contains(by) || "title,director".contains(by)) {
-            List<Film> filmsWithoutGenresAndDir = filmStorage.getFilmsBySearch(query, by);
-            List<Film> correctFilms = new ArrayList<>();
-            for (Film film : filmsWithoutGenresAndDir) {
-                Set<Genre> genres = genreStorage.getFilmGenres(film.getId());
-                Set<Director> directors = directorStorage.getFilmDirectors(film.getId());
-                Film correctFilm = film.withGenres(genres).withDirectors(directors);
-                correctFilms.add(correctFilm);
-            }
-            return correctFilms;
+            return filmStorage.getFilmsBySearch(query, by);
         } else {
             throw new ValidationException("Значения параметра 'by' некорректны");
         }

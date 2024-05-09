@@ -96,7 +96,7 @@ public class FilmDbStorage implements FilmStorage {
                 + "rm.name AS rating_name "
                 + "FROM films f "
                 + "JOIN rating_MPA rm ON rm.ID = f.rating_id ";
-        return jdbcTemplate.query(sql, mapper::makeFilm);
+        return fillFilmsWithData(jdbcTemplate.query(sql, mapper::makeFilm));
     }
 
     @Override
@@ -165,7 +165,7 @@ public class FilmDbStorage implements FilmStorage {
             films = jdbcTemplate.query(strictSql, mapper::makeFilm, year, genreId, count);
         }
 
-        return finishFilm(films);
+        return fillFilmsWithData(films);
     }
 
     @Override
@@ -179,12 +179,12 @@ public class FilmDbStorage implements FilmStorage {
         switch (sortBy) {
             case "likes":
                 String likesSql = baseSql + "ORDER BY f.likes DESC";
-                return jdbcTemplate.query(likesSql, mapper::makeFilm, directorId);
+                return fillFilmsWithData(jdbcTemplate.query(likesSql, mapper::makeFilm, directorId));
             case "year":
                 String yearSql = baseSql + "ORDER BY f.release_date";
-                return jdbcTemplate.query(yearSql, mapper::makeFilm, directorId);
+                return fillFilmsWithData(jdbcTemplate.query(yearSql, mapper::makeFilm, directorId));
             default:
-                return jdbcTemplate.query(baseSql, mapper::makeFilm, directorId);
+                return fillFilmsWithData(jdbcTemplate.query(baseSql, mapper::makeFilm, directorId));
         }
     }
 
@@ -203,7 +203,7 @@ public class FilmDbStorage implements FilmStorage {
                 + "GROUP BY user_id "
                 + "ORDER BY COUNT(film_id) DESC LIMIT 10)"
                 + "GROUP BY f.id";
-        return jdbcTemplate.query(sql, mapper::makeFilm, userId, userId);
+        return fillFilmsWithData(jdbcTemplate.query(sql, mapper::makeFilm, userId, userId));
     }
 
     @Override
@@ -220,14 +220,14 @@ public class FilmDbStorage implements FilmStorage {
         switch (by) {
             case "title":
                 sql = baseSql + "WHERE LOWER(f.name) LIKE ? ORDER BY f.id DESC";
-                return jdbcTemplate.query(sql, mapper::makeFilm, parameter);
+                return fillFilmsWithData(jdbcTemplate.query(sql, mapper::makeFilm, parameter));
             case "director":
                 sql = baseSql + joinDirectorSql + "WHERE LOWER(d.name) LIKE ? ORDER BY f.id DESC";
-                return jdbcTemplate.query(sql, mapper::makeFilm, parameter);
+                return fillFilmsWithData(jdbcTemplate.query(sql, mapper::makeFilm, parameter));
             default:
                 sql = baseSql + joinDirectorSql +
                         "WHERE LOWER(d.name) LIKE ? OR LOWER(f.name) LIKE ? ORDER BY f.id DESC";
-                return jdbcTemplate.query(sql, mapper::makeFilm, parameter, parameter);
+                return fillFilmsWithData(jdbcTemplate.query(sql, mapper::makeFilm, parameter, parameter));
         }
     }
 
@@ -247,67 +247,38 @@ public class FilmDbStorage implements FilmStorage {
                 + ") "
                 + "ORDER BY f.likes DESC";
 
-        return jdbcTemplate.query(sql, mapper::makeFilm, userId, friendId);
+        return fillFilmsWithData(jdbcTemplate.query(sql, mapper::makeFilm, userId, friendId));
     }
 
 
-    private Map<Long, List<Genre>> finishGenresFilms(Set<Long> filmIds) {
+    private Map<Long, List<Genre>> associateGenresWithFilms(Set<Long> filmIds) {
         String sql = "SELECT genres.id, genres.name, fg.film_id FROM genres " +
-                "LEFT JOIN film_genres fg ON genres.id = fg.genre_id " +
-                "WHERE fg.film_id IN (:filmIds)";
+                     "LEFT JOIN film_genres fg ON genres.id = fg.genre_id " +
+                     "WHERE fg.film_id IN (:filmIds)";
 
         NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
-        MapSqlParameterSource parameters = new MapSqlParameterSource("filmIds", filmIds);
+        MapSqlParameterSource parameters = new
+                MapSqlParameterSource("filmIds", filmIds);
 
-        Map<Long, List<Genre>> filmGenresMap = new HashMap<>();
-
-        namedParameterJdbcTemplate.query(sql, parameters, rs -> {
-                Long filmId = rs.getLong("film_id");
-
-                Genre genre = Genre.builder()
-                        .id(rs.getInt("id"))
-                        .name(rs.getString("name"))
-                        .build();
-
-                filmGenresMap.computeIfAbsent(filmId, k -> new ArrayList<>())
-                        .add(genre);
-        });
-
-        return filmGenresMap;
+        return namedParameterJdbcTemplate.query(sql, parameters, mapper::mapGenres);
     }
 
-    private Map<Long, List<Director>> finishDirectorsFilms(Set<Long> filmIds) {
+    private Map<Long, List<Director>> associateDirectorsWithFilms(Set<Long> filmIds) {
         String sql = "SELECT directors.id, directors.name, fd.film_id FROM directors " +
                 "LEFT JOIN film_directors fd ON directors.id = fd.director_id " +
                 "WHERE fd.film_id IN (:filmIds)";
-
         NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
         MapSqlParameterSource parameters = new MapSqlParameterSource("filmIds", filmIds);
-
-        Map<Long, List<Director>> filmDirectorsMap = new HashMap<>();
-
-        namedParameterJdbcTemplate.query(sql, parameters, rs -> {
-                Long filmId = rs.getLong("film_id");
-
-                Director director = Director.builder()
-                        .id(rs.getLong("id"))
-                        .name(rs.getString("name"))
-                        .build();
-
-                filmDirectorsMap.computeIfAbsent(filmId, k -> new ArrayList<>())
-                        .add(director);
-        });
-
-        return filmDirectorsMap;
+        return namedParameterJdbcTemplate.query(sql, parameters, mapper::mapDirectors);
     }
 
-    private List<Film> finishFilm(List<Film> films) {
+    private List<Film> fillFilmsWithData(List<Film> films) {
         Set<Long> filmIds = films.stream()
                 .map(Film::getId)
                 .collect(Collectors.toSet());
 
-        Map<Long, List<Genre>> filmGenresMap = finishGenresFilms(filmIds);
-        Map<Long, List<Director>> filmDirectorsMap = finishDirectorsFilms(filmIds);
+        Map<Long, List<Genre>> filmGenresMap = associateGenresWithFilms(filmIds);
+        Map<Long, List<Director>> filmDirectorsMap = associateDirectorsWithFilms(filmIds);
 
         return films.stream().map(film -> {
             List<Genre> genres = filmGenresMap.getOrDefault(film.getId(), new ArrayList<>());

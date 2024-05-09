@@ -5,6 +5,10 @@ import ru.yandex.practicum.filmorate.model.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class ModelMapper {
@@ -75,5 +79,31 @@ public class ModelMapper {
                 .id(rs.getLong("id"))
                 .name(rs.getString("name"))
                 .build();
+    }
+
+    public Map<Long, List<Genre>> mapGenres(ResultSet rs) throws SQLException {
+        Map<Long, List<Genre>> filmGenresMap = new HashMap<>();
+        while (rs.next()) {
+            Long filmId = rs.getLong("film_id");
+            Genre genre = Genre.builder()
+                    .id(rs.getInt("id"))
+                    .name(rs.getString("name"))
+                    .build();
+            filmGenresMap.computeIfAbsent(filmId, k -> new ArrayList<>()).add(genre);
+        }
+        return filmGenresMap;
+    }
+
+    public Map<Long, List<Director>> mapDirectors(ResultSet rs) throws SQLException {
+        Map<Long, List<Director>> filmDirectorsMap = new HashMap<>();
+        while (rs.next()) {
+            Long filmId = rs.getLong("film_id");
+            Director director = Director.builder()
+                    .id(rs.getLong("id"))
+                    .name(rs.getString("name"))
+                    .build();
+            filmDirectorsMap.computeIfAbsent(filmId, k -> new ArrayList<>()).add(director);
+        }
+        return filmDirectorsMap;
     }
 }
