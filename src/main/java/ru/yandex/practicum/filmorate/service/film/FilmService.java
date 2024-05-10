@@ -88,7 +88,6 @@ public class FilmService {
         Film film = filmStorage.getFilmById(id);
         Set<Genre> genres = genreStorage.getFilmGenres(film.getId());
         Set<Director> directors = directorStorage.getFilmDirectors(film.getId());
-
         return film.withGenres(genres).withDirectors(directors);
     }
 
