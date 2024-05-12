@@ -25,6 +25,7 @@ public class ModelMapper {
                         .id(rs.getInt("rating_id"))
                         .name(rs.getString("rating_name"))
                         .build())
+                .mark(rs.getDouble("mark"))
                 .build();
     }
 

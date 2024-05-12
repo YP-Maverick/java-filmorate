@@ -125,10 +125,45 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
+    public void addMark(Long filmId, Long userId, Integer mark) {
+        log.debug("Запрос пользователя с id {} добавить оценку '{}' фильму с id {}.", userId, mark, filmId);
+        String checkSql = "SELECT COUNT(*) FROM film_marks WHERE film_id = ? AND user_id = ?";
+        int checkLikes = jdbcTemplate.queryForObject(checkSql, Integer.class, filmId, userId);
+
+        if (checkLikes == 0) {
+            String sql = "INSERT INTO film_marks (film_id, user_id, mark) VALUES (?, ?, ?)";
+            jdbcTemplate.update(sql, filmId, userId, mark);
+            String filmLikeSql = "UPDATE films SET likes = likes + 1 WHERE id = ?";
+            jdbcTemplate.update(filmLikeSql, filmId);
+        } else {
+            String updateSql = "UPDATE film_marks SET mark = ? WHERE film_id = ? AND user_id = ?";
+            jdbcTemplate.update(updateSql, mark, filmId, userId);
+            log.info("Пользователь с id {} обновил оценку фильму с id {} на '{}'.", userId, filmId, mark);
+        }
+
+        String avgSql = "SELECT AVG(mark) FROM film_marks WHERE film_id = ?";
+        Double avgMark = jdbcTemplate.queryForObject(avgSql, Double.class, filmId);
+        String updateFilmSql = "UPDATE films SET mark = ? WHERE id = ?";
+        jdbcTemplate.update(updateFilmSql, avgMark, filmId);
+    }
+
+    @Override
     public void deleteLike(Long filmId, Long userId) {
         log.debug("Запрос пользователя с id {} удалить лайк у фильма с id {}.", userId, filmId);
 
         String sql = "DELETE FROM film_likes WHERE film_id = ? AND user_id = ? ";
+        int row = jdbcTemplate.update(sql, filmId, userId);
+        if (row == 1) {
+            String filmLikeSql = "UPDATE films SET likes = likes - 1 WHERE id = ?";
+            jdbcTemplate.update(filmLikeSql, filmId);
+        }
+    }
+
+    @Override
+    public void deleteMark(Long filmId, Long userId) {
+        log.debug("Запрос пользователя с id {} удалить оценку у фильма с id {}.", userId, filmId);
+
+        String sql = "DELETE FROM film_marks WHERE film_id = ? AND user_id = ? ";
         int row = jdbcTemplate.update(sql, filmId, userId);
         if (row == 1) {
             String filmLikeSql = "UPDATE films SET likes = likes - 1 WHERE id = ?";
@@ -146,7 +181,7 @@ public class FilmDbStorage implements FilmStorage {
                 + "JOIN rating_MPA rm ON rm.ID = f.rating_id "
                 + "LEFT JOIN film_genres fg ON fg.film_id = f.id "
                 + "WHERE (YEAR(f.release_date) = ?) %s (fg.genre_id = ?) "
-                + "ORDER BY likes DESC LIMIT ?";
+                + "ORDER BY f.mark DESC LIMIT ?";
 
         List<Film> films;
 
@@ -155,7 +190,7 @@ public class FilmDbStorage implements FilmStorage {
                     + "rm.name AS rating_name "
                     + "FROM films f "
                     + "JOIN rating_MPA rm ON rm.ID = f.rating_id "
-                    + "ORDER BY likes DESC LIMIT ?";
+                    + "ORDER BY f.mark DESC LIMIT ?";
             films = jdbcTemplate.query(sql, mapper::makeFilm, count);
         } else if (year == null || genreId == null) {
             String nonStrictSql = String.format(baseSql, "OR");
@@ -170,6 +205,8 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getFilmsByDirector(Long directorId, String sortBy) {
+        log.debug("Получен запрос вывести список фильмов по режиссеру с id {} отсортированных по {}.", directorId, sortBy);
+
         String baseSql = "SELECT f.*, "
                 + "rm.name AS rating_name "
                 + "FROM films f "
@@ -180,6 +217,9 @@ public class FilmDbStorage implements FilmStorage {
             case "likes":
                 String likesSql = baseSql + "ORDER BY f.likes DESC";
                 return fillFilmsWithData(jdbcTemplate.query(likesSql, mapper::makeFilm, directorId));
+            case "marks":
+                String marksSql = baseSql + "ORDER BY f.mark DESC";
+                return fillFilmsWithData(jdbcTemplate.query(marksSql, mapper::makeFilm, directorId));
             case "year":
                 String yearSql = baseSql + "ORDER BY f.release_date";
                 return fillFilmsWithData(jdbcTemplate.query(yearSql, mapper::makeFilm, directorId));
@@ -188,7 +228,7 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-    @Override
+/*    @Override
     public List<Film> getRecommendations(Long userId) {
         log.debug("Рекомендации фильмов для пользователя с id {} .", userId);
 
@@ -204,7 +244,36 @@ public class FilmDbStorage implements FilmStorage {
                 + "ORDER BY COUNT(film_id) DESC LIMIT 10)"
                 + "GROUP BY f.id";
         return fillFilmsWithData(jdbcTemplate.query(sql, mapper::makeFilm, userId, userId));
+    }*/
+
+    @Override
+    public List<Film> getRecommendations(Long userId) {
+        log.debug("Рекомендации фильмов для пользователя с id {} .", userId);
+
+        String sql = "SELECT f.*, "
+                + "rm.name AS rating_name "
+                + "FROM films f "
+                + "JOIN rating_MPA rm ON rm.ID = f.rating_id "
+                + "WHERE f.id IN ( " // Фильтруем фильмы по ID, которые присутствуют в результатах подзапроса
+                + "    SELECT DISTINCT fm.film_id " // Выбираем ID фильмов
+                + "    FROM film_marks fm " // из таблицы film_marks
+                + "    WHERE fm.user_id IN ( " // где ID пользователя присутствует в результатах следующего подзапроса
+                + "        SELECT DISTINCT fm2.user_id " // выбираем ID пользователей
+                + "        FROM film_marks fm1 " // из таблицы film_marks
+                + "        JOIN film_marks fm2 ON fm1.film_id = fm2.film_id AND fm1.user_id != fm2.user_id " // соединяем таблицу film_marks саму с собой чтобы найти фильмы оцененные разными пользователями
+                + "        WHERE fm1.user_id = ? " // фильтруем по ID нашего пользователя
+                + "        AND ABS(fm1.mark - fm2.mark) <= 2 " // фильтруем пользователей, чьи оценки отличаются не более чем на 2 балла от оценок нашего пользователя
+                + "    ) "
+                + ") "
+                + "AND f.id NOT IN (SELECT film_id FROM film_marks WHERE user_id = ?) " // Исключаем фильмы, которые уже оценил пользователь
+                + "AND f.mark >= 6 " // Фильтруем по оценке
+                + "GROUP BY f.id "
+                + "ORDER BY f.mark DESC";
+
+        return fillFilmsWithData(jdbcTemplate.query(sql, mapper::makeFilm, userId, userId));
     }
+
+
 
     @Override
     public List<Film> getFilmsBySearch(String query, String by) {
@@ -245,7 +314,7 @@ public class FilmDbStorage implements FilmStorage {
                 + "    JOIN film_likes fl2 ON fl1.film_id = fl2.film_id "
                 + "    WHERE fl1.user_id = ? AND fl2.user_id = ? "
                 + ") "
-                + "ORDER BY f.likes DESC";
+                + "ORDER BY f.mark DESC";
 
         return fillFilmsWithData(jdbcTemplate.query(sql, mapper::makeFilm, userId, friendId));
     }
