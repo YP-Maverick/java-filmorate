@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление пользователями и фильмами</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { max-width: 80%; margin: 20px auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        form label, form input { display: block; margin-bottom: 5px; }
+        button { margin: 5px; padding: 8px 12px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        #film-form label, #film-form input, #film-form textarea { display: block; margin-bottom: 5px; }
+
+        #feed-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #feed-table th, #feed-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Управление пользователями</h1>
+    <h2>Создать пользователя</h2>
+    <hr>
+    <form id="create-user-form" style="display: flex; align-items: center;">
+        <label for="email" style="margin-right: 10px;">Email:</label>
+        <input type="email" id="email" name="email" required style="margin-right: 10px;">
+        <label for="login" style="margin-right: 10px;">Логин:</label>
+        <input type="text" id="login" name="login" required style="margin-right: 10px;">
+        <label for="name" style="margin-right: 10px;">Имя:</label>
+        <input type="text" id="name" name="name" required style="margin-right: 10px;">
+        <label for="birthday" style="margin-right: 10px;">Дата рождения:</label>
+        <input type="date" id="birthday" name="birthday" required style="margin-right: 10px;">
+        <button type="submit">Создать</button>
+    </form>
+    <hr>
+
+    <h3>Список пользователей</h3>
+    <table id="user-table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Email</th>
+            <th>Логин</th>
+            <th>Имя</th>
+            <th>Дата рождения</th>
+            <th>Друзья</th>
+            <th>Добавить друга</th>
+            <th>История действий</th>
+            <th>Действия</th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <div id="friends-list-container"> </div>
+
+    <div id="feed-modal"  class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeFeedModal()">&times;</span>
+            <h2>История действий пользователя</h2>
+            <table id="feed-table">
+                <thead>
+                <tr>
+                    <th>ID события</th>
+                    <th>Тип события</th>
+                    <th>Операция</th>
+                    <th>Дата и время</th>
+                    <th>ID пользователя</th>
+                    <th>ID сущности</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h1>Управление фильмами</h1>
+    <h3>Создать режиссера</h3>
+    <hr>
+    <form id="director-form" style="display: flex; align-items: center;">
+        <label for="director-name" style="margin-right: 10px;">Имя режиссера:</label>
+        <input type="text" id="director-name" name="name" required style="margin-right: 10px;">
+        <button type="submit">Создать</button>
+    </form>
+    <hr>
+
+    <h3>Добавить фильм</h3>
+    <hr>
+    <form id="film-form" style="display: flex; flex-wrap: wrap; align-items: center;">
+        <div style="flex: 1 0 48%; margin-right: 10px;">
+            <label for="film-name" style="display: block;">Название:</label>
+            <input type="text" id="film-name" name="name" required style="width: 100%;">
+        </div>
+        <div style="flex: 1 0 48%; margin-right: 10px;">
+            <label for="film-description" style="display: block;">Описание:</label>
+            <textarea id="film-description" name="description" style="width: 100%;"></textarea>
+        </div>
+        <div style="flex: 1 0 48%; margin-right: 10px;">
+            <label for="film-release-date" style="display: block;">Дата выхода:</label>
+            <input type="date" id="film-release-date" name="releaseDate" required style="width: 100%;">
+        </div>
+        <div style="flex: 1 0 48%; margin-right: 10px;">
+            <label for="film-duration" style="display: block;">Продолжительность (мин.):</label>
+            <input type="number" id="film-duration" name="duration" required style="width: 100%;">
+        </div>
+        <div style="flex: 1 0 48%; margin-right: 10px;">
+            <label for="film-genre" style="display: block;">Жанр:</label>
+            <select id="film-genre" name="genreId" multiple style="width: 100%;">
+                <option value="1">Комедия</option>
+                <option value="2">Драма</option>
+                <option value="3">Мультфильм</option>
+                <option value="4">Триллер</option>
+                <option value="5">Документальный</option>
+                <option value="6">Боевик</option>
+            </select>
+        </div>
+        <div style="flex: 1 0 48%; margin-right: 10px;">
+            <label for="film-mpa" style="display: block;">Рейтинг:</label>
+            <select id="film-mpa" name="mpaId" style="width: 100%;">
+                <option value="1">G</option>
+                <option value="2">PG</option>
+                <option value="3">PG-13</option>
+                <option value="4">R</option>
+                <option value="5">NC-17</option>
+            </select>
+        </div>
+        <div style="flex: 1 0 48%; margin-right: 10px;">
+            <label for="film-director" style="display: block;">Режиссер:</label>
+            <select id="film-director" name="directorId" style="width: 100%;">
+                <option value="">Выберите режиссера</option>
+            </select>
+        </div>
+        <div style="flex: 1 0 48%;">
+            <button type="submit">Добавить фильм</button>
+        </div>
+    </form>
+    <hr>
+
+    <h3>Оценить фильм</h3>
+    <hr>
+    <form id="rate-film-form" style="display: flex; align-items: center;">
+        <label for="film-to-rate" style="margin-right: 10px;">Фильм:</label>
+        <select id="film-to-rate" name="filmId" style="margin-right: 10px;">
+            <option value="">Выберите фильм</option>
+        </select>
+
+        <label for="user-rating" style="margin-right: 10px;">Пользователь:</label>
+        <select id="user-rating" name="userId" style="margin-right: 10px;">
+            <option value="">Выберите пользователя</option>
+        </select>
+
+        <label for="mark" style="margin-right: 10px;">Оценка:</label>
+        <select id="mark" name="mark" style="margin-right: 10px;">
+            <option value="">Выберите оценку</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+        </select>
+
+        <button type="submit">Оценить</button>
+    </form>
+    <hr>
+
+    <h3>Список фильмов</h3>
+    <table id="film-table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Год</th>
+            <th>Режиссёр</th>
+            <th>Жанр</th>
+            <th>Оценка</th>
+            <th>Действия</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <div id="film-details-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('film-details-modal')">&times;</span>
+            <h2>Подробная информация о фильме</h2>
+            <div id="film-details"></div>
+        </div>
+    </div>
+</div>
+
+    <script>
+        // Функция для закрытия модального окна истории действий
+        function closeFeedModal() {
+            document.getElementById("feed-modal").style.display = "none";
+        }
+
+        // Функция для закрытия любого модального окна
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = "none";
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const apiBaseUrl = "http://localhost:8080"; // Базовый URL API
+            const usersApiUrl = `${apiBaseUrl}/users`; // URL для API пользователей
+            const filmsApiUrl = `${apiBaseUrl}/films`; // URL для API фильмов
+            const directorsApiUrl = `${apiBaseUrl}/directors`;
+
+            const userTable = document.getElementById("user-table");
+            const createUserForm = document.getElementById("create-user-form");
+
+            // Функция для создания опций select
+            function createSelectOptions(selectElement, data, valueProperty, textProperty) {
+                selectElement.innerHTML = '<option value="">Выберите...</option>';
+                data.forEach(item => {
+                    const option = document.createElement("option");
+                    option.value = item[valueProperty];
+                    option.textContent = item[textProperty];
+                    selectElement.appendChild(option);
+                });
+            }
+
+            // Функция для получения списка режиссеров и заполнения select
+            async function fetchDirectors() {
+                try {
+                    const response = await fetch(directorsApiUrl);
+                    if (!response.ok) {
+                        throw new Error("Ошибка при получении списка режиссеров.");
+                    }
+                    const directors = await response.json();
+                    const directorSelect = document.getElementById("film-director");
+                    createSelectOptions(directorSelect, directors, 'id', 'name');
+                } catch (error) {
+                    console.error(error); // Вывод ошибки в консоль
+                    alert(error.message);
+                }
+            }
+
+            // Функция для получения списка фильмов и заполнения select
+            async function fetchFilms() {
+                try {
+                    const response = await fetch(filmsApiUrl);
+                    if (!response.ok) {
+                        throw new Error("Ошибка при получении списка фильмов.");
+                    }
+                    const films = await response.json();
+                    const filmSelect = document.getElementById("film-to-rate");
+                    filmSelect.innerHTML = '<option value="">Выберите фильм</option>';
+                    films.forEach(film => {
+                        const option = document.createElement("option");
+                        option.value = film.id;
+                        option.textContent = film.name;
+                        filmSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    alert(error.message);
+                }
+            }
+
+            // Функция для получения списка пользователей и заполнения select
+            async function fetchUsers() {
+                try {
+                    const response = await fetch(usersApiUrl);
+                    if (!response.ok) {
+                        throw new Error("Ошибка при получении списка пользователей.");
+                    }
+                    const users = await response.json();
+                    const userSelect = document.getElementById("user-rating");
+                    userSelect.innerHTML = '<option value="">Выберите пользователя</option>';
+                    users.forEach(user => {
+                        const option = document.createElement("option");
+                        option.value = user.id;
+                        option.textContent = user.name;
+                        userSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    alert(error.message);
+                }
+            }
+
+            // Удаление пользователя
+            async function deleteUser(event) {
+                const userId = event.target.dataset.userId;
+                const deleteUrl = `${usersApiUrl}/${userId}`;
+                const response = await fetch(deleteUrl, {method: "DELETE"});
+                if (response.ok) {
+                    alert("Пользователь удален!");
+                    updateUsersTable(); // Обновляем список
+                } else {
+                    alert("Ошибка при удалении пользователя.");
+                }
+            }
+
+            // Удаление друга
+            async function deleteFriend(userId, friendId) {
+                const deleteFriendUrl = `${usersApiUrl}/${userId}/friends/${friendId}`;
+                const response = await fetch(deleteFriendUrl, {method: "DELETE"});
+                if (response.ok) {
+                    alert("Друг удален!");
+
+                    // Находим строку пользователя
+                    const userRow = Array.from(document.querySelectorAll('#user-table tr')).find(row => {
+                        const firstCell = row.querySelector('td:first-child');
+                        return firstCell && firstCell.textContent.includes(userId);
+                    });
+                    if (userRow) {
+                        // Находим список друзей в этой строке
+                        const friendsList = userRow.querySelector('ul');
+                        // Находим элемент списка, содержащий ID удаленного друга
+                        const friendItem = Array.from(friendsList.children).find(li => {
+                            return li.textContent.includes(friendId);
+                        });
+                        // Удаляем элемент списка
+                        if (friendItem) {
+                            friendsList.removeChild(friendItem);
+                        }
+                    }
+                } else {
+                    alert("Ошибка при удалении друга.");
+                }
+            }
+
+            // Добавление друга
+            async function addFriend(userId, friendId) {
+                const addFriendUrl = `${usersApiUrl}/${userId}/friends/${friendId}`;
+                const response = await fetch(addFriendUrl, {method: "PUT"});
+                if (response.ok) {
+                    alert("Друг добавлен!");
+                    updateUsersTable();
+                } else {
+                    alert("Ошибка при добавлении друга.");
+                }
+            }
+
+            // Функция для получения истории действий пользователя
+            async function fetchUserFeed(userId) {
+                try {
+                    const response = await fetch(`${usersApiUrl}/${userId}/feed`);
+                    if (!response.ok) {
+                        throw new Error(`Ошибка при получении истории действий (статус ${response.status})`);
+                    }
+                    const feedData = await response.json();
+
+                    // Отрисовка таблицы с историей действий
+                    const feedTableBody = document.querySelector("#feed-table tbody");
+                    feedTableBody.innerHTML = ""; // Очищаем таблицу
+                    feedData.forEach(event => {
+                        const row = feedTableBody.insertRow();
+                        const cells = [
+                            event.eventId,
+                            event.eventType,
+                            event.operation,
+                            new Date(event.timestamp).toLocaleString(),
+                            event.userId,
+                            event.entityId
+                        ];
+                        cells.forEach(cellData => {
+                            const cell = row.insertCell();
+                            cell.textContent = cellData;
+                        });
+                    });
+
+                    // Открываем модальное окно
+                    document.getElementById("feed-modal").style.display = "block";
+
+                } catch (error) {
+                    alert(error.message);
+                }
+            }
+
+            // Получение списка пользователей и обновление таблицы
+            async function updateUsersTable() {
+                const response = await fetch(usersApiUrl);
+                const users = await response.json();
+                const tableBody = userTable.querySelector("tbody");
+                tableBody.innerHTML = "";
+
+                // Получаем списки друзей для всех пользователей
+                const friendsPromises = users.map(user =>
+                    fetch(`${usersApiUrl}/${user.id}/friends`).then(res => res.json())
+                );
+                const allFriendsData = await Promise.all(friendsPromises);
+
+                users.forEach((user, index) => {
+                    const row = tableBody.insertRow();
+                    const cells = [user.id, user.email, user.login, user.name, user.birthday];
+                    cells.forEach(cellData => {
+                        const cell = row.insertCell();
+                        cell.textContent = cellData;
+                    });
+
+                    // Колонка "Друзья"
+                    const friendsCell = row.insertCell();
+                    const userFriendIds = allFriendsData[index].map(friend => friend.id);
+                    const friendsList = document.createElement('ul');
+
+                    if (userFriendIds.length === 0) {
+                        friendsList.innerHTML = '<p>Нет друзей</p>';
+                    } else {
+                        userFriendIds.forEach(friendId => {
+                            const friendData = users.find(u => u.id === friendId);
+                            if (friendData) {
+                                const listItem = document.createElement('li');
+                                listItem.textContent = friendData.name;
+
+                                // Создаем кнопку удаления друга
+                                const deleteButton = document.createElement('button');
+                                deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+                                deleteButton.addEventListener('click', () => {
+                                    deleteFriend(user.id, friendId).then(() => {
+                                        updateUsersTable();
+                                    });
+                                });
+
+                                listItem.appendChild(deleteButton);
+                                friendsList.appendChild(listItem);
+                            }
+                        });
+                    }
+
+                    friendsCell.appendChild(friendsList);
+
+                    // Колонка "Добавить друга"
+                    const addFriendCell = row.insertCell();
+                    const friendSelect = document.createElement("select");
+                    friendSelect.innerHTML = '<option value="">Выберите друга</option>';
+
+                    users.forEach(potentialFriend => {
+                        if (potentialFriend.id !== user.id && !userFriendIds.includes(potentialFriend.id)) {
+                            const option = document.createElement("option");
+                            option.value = potentialFriend.id;
+                            option.textContent = potentialFriend.name;
+                            friendSelect.appendChild(option);
+                        }
+                    });
+
+                    addFriendCell.appendChild(friendSelect);
+
+                    const addButton = document.createElement("button");
+                    addButton.innerHTML = '<i class="fas fa-user-plus"></i>';
+                    addButton.addEventListener("click", () => {
+                        const selectedFriendId = friendSelect.value;
+                        if (selectedFriendId) {
+                            addFriend(user.id, selectedFriendId);
+                        } else {
+                            alert("Выберите друга из списка.");
+                        }
+                    });
+                    addFriendCell.appendChild(addButton);
+
+                    // Колонка "История действий"
+                    const feedCell = row.insertCell();
+                    const getFeedButton = document.createElement("button");
+                    getFeedButton.textContent = "Получить";
+                    getFeedButton.addEventListener("click", () => fetchUserFeed(user.id));
+                    feedCell.appendChild(getFeedButton);
+
+
+                // Кнопка "Удалить"
+                    const actionsCell = row.insertCell();
+                    const deleteButton = document.createElement("button");
+                    deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+                    deleteButton.dataset.userId = user.id;
+                    deleteButton.addEventListener("click", deleteUser);
+                    actionsCell.appendChild(deleteButton);
+                }); // Конец цикла users.forEach
+            }
+
+            // Показать друзей пользователя
+            async function showFriends(event) {
+                const userId = event.target.dataset.userId;
+                const friendsUrl = `${usersApiUrl}/${userId}/friends`;
+
+                try {
+                    const response = await fetch(friendsUrl);
+                    if (!response.ok) {
+                        throw new Error(`Ошибка при получении списка друзей (статус ${response.status})`);
+                    }
+
+                    const friendsData = await response.json();
+
+                    // Проверка данных
+                    if (!Array.isArray(friendsData) || friendsData.length === 0) {
+                        throw new Error("API не вернул список друзей или список пуст.");
+                    }
+
+                    const friendsList = document.getElementById("friends-list");
+                    friendsList.innerHTML = ''; // Очищаем предыдущий список
+
+                    if (friendsData.length === 0) {
+                        friendsList.innerHTML = '<p>Нет друзей</p>';
+                    } else {
+                        const list = document.createElement('ul');
+                        friendsData.forEach(friend => {
+                            const listItem = document.createElement('li');
+                            listItem.textContent = friend.name;
+
+                            // Создаем кнопку удаления друга
+                            const deleteButton = document.createElement('button');
+                            deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+                            deleteButton.addEventListener('click', () => deleteFriend(userId, friend.id));
+
+                            listItem.appendChild(deleteButton);
+                            list.appendChild(listItem);
+                        });
+                        friendsList.appendChild(list);
+                    }
+
+                    friendsList.classList.add("show");
+                    document.getElementById("friends-modal").style.display = "block";
+
+                } catch (error) {
+                    alert(error.message);
+                }
+            }
+
+            // Получение списка фильмов
+            async function getFilms() {
+                const response = await fetch(filmsApiUrl);
+                const films = await response.json();
+                const tableBody = document.getElementById("film-table").querySelector("tbody");
+                tableBody.innerHTML = "";
+                films.forEach(film => {
+                    const row = tableBody.insertRow();
+                    // Используем правильные имена полей
+                    const cells = [film.id, film.name, film.releaseDate.slice(0, 4),  // Извлекаем год из даты
+                        // Поля "Режиссёр" и "Жанр" требуют дополнительной обработки, так как могут быть пустыми
+                        film.directors.length > 0 ? film.directors[0].name : "не указан",
+                        film.genres.length > 0 ? film.genres.map(genre => genre.name).join(", ") : "не указаны",
+                        film.mark
+                    ];
+                    cells.forEach(cellData => {
+                        const cell = row.insertCell();
+                        cell.textContent = cellData;
+                    });
+                    // Действия с фильмами (пока только удаление)
+                    const actionsCell = row.insertCell();
+                    const deleteButton = document.createElement("button");
+                    deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+                    deleteButton.dataset.filmId = film.id;
+                    deleteButton.addEventListener("click", deleteFilm);
+                    actionsCell.appendChild(deleteButton);
+
+                    const detailsButton = document.createElement("button");
+                    detailsButton.textContent = "Подробнее";
+                    detailsButton.dataset.filmId = film.id;
+                    detailsButton.addEventListener("click", showFilmDetails);
+                    actionsCell.appendChild(detailsButton);
+                });
+            }
+
+            // Удаление фильма
+            async function deleteFilm(event) {
+                const filmId = event.target.dataset.filmId;
+                const deleteUrl = `${filmsApiUrl}/${filmId}`;
+                const response = await fetch(deleteUrl, {method: "DELETE"});
+                if (response.ok) {
+                    alert("Фильм удален!");
+                    getFilms(); // Обновляем список
+                } else {
+                    alert("Ошибка при удалении фильма.");
+                }
+            }
+
+            // Показать детали фильма
+            async function showFilmDetails(event) {
+                const filmId = event.target.dataset.filmId;
+                try {
+                    const response = await fetch(`${filmsApiUrl}/${filmId}`);
+                    if (!response.ok) {
+                        throw new Error("Ошибка при получении информации о фильме.");
+                    }
+                    const film = await response.json();
+
+                    // Используем filmDetailsModal для модального окна фильма
+                    const filmDetailsModal = document.getElementById("film-details-modal");
+                    filmDetailsModal.style.display = "block";
+
+                    const filmDetailsDiv = document.getElementById("film-details");
+                    filmDetailsDiv.innerHTML = `
+            <h3>${film.name}</h3>
+            <p>Описание: ${film.description}</p>
+      <p>Дата выхода: ${film.releaseDate}</p>
+      <p>Продолжительность: ${film.duration} мин.</p>
+      <p>Лайки: ${film.likes}</p>
+      <p>Жанры: ${film.genres.map(genre => genre.name).join(", ") || "не указаны"}</p>
+      <p>MPA: ${film.mpa.name}</p>
+      <p>Режиссёры: ${film.directors.map(director => director.name).join(", ") || "не указаны"}</p>
+      <p>Оценка: ${film.mark}</p>
+    `;
+                } catch (error) {
+                    console.error(error);
+                    alert(error.message);
+                }
+            }
+
+            // Добавляем обработчик события focus на поле выбора режиссера
+            document.getElementById("film-director").addEventListener("focus", fetchDirectors);
+            document.getElementById("film-to-rate").addEventListener("focus", fetchFilms);
+            document.getElementById("user-rating").addEventListener("focus", fetchUsers);
+
+            // Создание пользователя
+            createUserForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const formData = new FormData(createUserForm);
+                const user = Object.fromEntries(formData.entries());
+                const response = await fetch(usersApiUrl, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(user)
+                });
+                if (response.ok) {
+                    alert("Пользователь создан!");
+                    createUserForm.reset();
+                    updateUsersTable(); // Обновляем список
+                } else {
+                    alert("Ошибка при создании пользователя.");
+                }
+            });
+
+            // Добавление фильма
+            document.getElementById("film-form").addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const formData = new FormData(event.target);
+                const filmData = Object.fromEntries(formData.entries());
+                // Получаем выбранные жанры из multiple select
+                const selectedGenreIds = Array.from(document.getElementById("film-genre").selectedOptions)
+                    .map(option => parseInt(option.value));
+                // Получаем id выбранного режиссера
+                const selectedDirectorId = parseInt(document.getElementById("film-director").value);
+                // Добавление genreId и mpaId в filmData
+                filmData.mpa = {id: parseInt(document.getElementById("film-mpa").value)};
+                // filmData.genres = [{ id: parseInt(document.getElementById("film-genre").value) }];
+                filmData.genres = selectedGenreIds.map(genreId => ({id: genreId}));
+                filmData.directors = [{id: selectedDirectorId}];
+                const response = await fetch(filmsApiUrl, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(filmData)
+                });
+                if (response.ok) {
+                    alert("Фильм добавлен!");
+                    event.target.reset();
+                    getFilms(); // Обновляем список фильмов
+                } else {
+                    alert("Ошибка при добавлении фильма.");
+                }
+            });
+
+            // Создание режиссера
+            document.getElementById("director-form").addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const formData = new FormData(event.target);
+                const directorData = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch(directorsApiUrl, {
+                        method: "POST", // Исправлено на POST
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify(directorData)
+                    });
+                    if (response.ok) {
+                        alert("Режиссер создан!");
+                        event.target.reset();
+                    } else {
+                        const errorData = await response.json(); // Получаем данные об ошибке
+                        alert(`Ошибка при создании режиссера: ${errorData.message || "Неизвестная ошибка"}`);
+                    }
+                } catch (error) {
+                    alert(`Ошибка при создании режиссера: ${error.message}`);
+                }
+            });
+
+            // Отправка оценки фильма
+            document.getElementById("rate-film-form").addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const filmId = document.getElementById("film-to-rate").value;
+                const userId = document.getElementById("user-rating").value;
+                const mark = document.getElementById("mark").value;
+
+                try {
+                    const response = await fetch(`${filmsApiUrl}/${filmId}/like/${userId}?mark=${mark}`, {
+                        method: "PUT"
+                    });
+
+                    if (response.ok) {
+                        alert("Фильм оценен!");
+                        getFilms();
+                        event.target.reset();
+                    } else {
+                        alert("Ошибка при оценке фильма.");
+                    }
+                } catch (error) {
+                    alert(`Ошибка: ${error.message}`);
+                }
+            });
+
+            // Вызываем функции при загрузке страницы
+            window.addEventListener('load', () => {
+                updateUsersTable();
+                getFilms();
+            });
+
+            // Обработчик клика вне модального окна
+            window.onclick = function(event) {
+                const modals = document.querySelectorAll('.modal'); // Выбираем все модальные окна
+                modals.forEach(modal => {
+                    if (event.target === modal) {
+                        closeModal(modal.id);
+                    }
+                });
+            };
+        });
+
+    </script>
+</body>
+</html>
