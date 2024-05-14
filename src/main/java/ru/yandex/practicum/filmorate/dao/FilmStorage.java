@@ -19,7 +19,11 @@ public interface FilmStorage {
 
     void addLike(Long filmId, Long userId);
 
+    void addMark(Long filmId, Long userId, Integer mark);
+
     void deleteLike(Long filmId, Long userId);
+
+    void deleteMark(Long filmId, Long userId);
 
     List<Film> getTopFilms(Integer count, Integer genreId, String year);
 

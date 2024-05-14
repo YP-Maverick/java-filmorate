@@ -36,13 +36,30 @@ public class FilmService {
     public void addLike(Long filmId, Long userId) {
         checkFilmAndUserId(filmId, userId);
         filmStorage.addLike(filmId, userId);
-        eventStorage.add(EventType.LIKE.toString(), EventOperation.ADD.toString(), userId, filmId);
+//        eventStorage.add(EventType.LIKE.toString(), EventOperation.ADD.toString(), userId, filmId);
+    }
+
+    public void addMark(Long filmId, Long userId, Integer mark) {
+        if (mark < 1 || mark > 10) {
+            throw new ValidationException("Оценка должна быть в диапазоне от 1 до 10.");
+        }
+        checkFilmAndUserId(filmId, userId);
+        filmStorage.addMark(filmId, userId, mark);
+        addLike(filmId, userId);
+        eventStorage.add(EventType.MARK.toString(), EventOperation.ADD.toString(), userId, filmId);
     }
 
     public void deleteLike(Long filmId, Long userId) {
         checkFilmAndUserId(filmId, userId);
         filmStorage.deleteLike(filmId, userId);
-        eventStorage.add(EventType.LIKE.toString(), EventOperation.REMOVE.toString(), userId, filmId);
+//        eventStorage.add(EventType.LIKE.toString(), EventOperation.REMOVE.toString(), userId, filmId);
+    }
+
+    public void deleteMark(Long filmId, Long userId) {
+        checkFilmAndUserId(filmId, userId);
+        filmStorage.deleteMark(filmId, userId);
+        deleteLike(filmId, userId);
+        eventStorage.add(EventType.MARK.toString(), EventOperation.REMOVE.toString(), userId, filmId);
     }
 
     public List<Film> getTopFilms(Integer count, Integer genreId, String year) {

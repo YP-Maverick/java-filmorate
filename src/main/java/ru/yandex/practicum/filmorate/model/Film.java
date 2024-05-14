@@ -33,16 +33,19 @@ public class Film {
     RatingMpa mpa;
     @With
     Set<Director> directors;
+    @With
+    Double mark;
 
 
     public Film(Long id, String name, String description, LocalDate releaseDate, int duration,
-                Long likes, Set<Genre> genres, RatingMpa mpa, Set<Director> directors) {
+                Long likes, Set<Genre> genres, RatingMpa mpa, Set<Director> directors, Double mark) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.releaseDate = releaseDate;
         this.duration = duration;
         this.likes = (likes == null) ? 0L : likes;
+        this.mark = mark;
 
         this.genres = (genres == null) ? new HashSet<>() : genres.stream()
                 .sorted(Comparator.comparing(Genre::getId))

@@ -246,7 +246,6 @@ public class FilmDbStorageTest {
         assertThat(incorrectTopFilms)
                 .isEqualTo(emptyList);
     }
-
     @Test
     public void testGetRecommendations() {
         Film film1 = createFilm();

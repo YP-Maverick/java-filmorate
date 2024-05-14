@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS "REVIEW_LIKES" CASCADE;
 DROP TABLE IF EXISTS "REVIEW_DISLIKES" CASCADE;
 DROP TABLE IF EXISTS "DIRECTORS" CASCADE;
 DROP TABLE IF EXISTS "FILM_DIRECTORS" CASCADE;
+DROP TABLE IF EXISTS "FILM_MARKS" CASCADE;
 
 
 -- Создание таблицы users
@@ -46,6 +47,7 @@ CREATE TABLE IF NOT EXISTS films (
 	release_date timestamp NOT NULL,
 	duration INTEGER NOT NULL,
 	likes INTEGER DEFAULT 0,
+    mark DECIMAL(4,2) DEFAULT 0.00,
 	rating_id INTEGER REFERENCES rating_MPA (id),
 	CONSTRAINT name_not_blank CHECK (name <> ''),
 	CONSTRAINT positive CHECK (duration > 0)
@@ -56,7 +58,14 @@ CREATE TABLE IF NOT EXISTS film_likes (
 	film_id INTEGER REFERENCES films (id) ON DELETE CASCADE,
 	user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
 	CONSTRAINT pk_film_likes PRIMARY KEY(film_id, user_id)
+);
 
+-- Создание таблицы film_marks
+CREATE TABLE IF NOT EXISTS film_marks (
+film_id INTEGER REFERENCES films (id) ON DELETE CASCADE,
+user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
+mark INTEGER NOT NULL CHECK (mark BETWEEN 1 AND 10),
+CONSTRAINT pk_film_marks PRIMARY KEY (film_id, user_id)
 );
 
 --Создание таблицы genres
@@ -82,7 +91,6 @@ CREATE TABLE IF NOT EXISTS events (
 	user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
 	entity_id INTEGER
 );
-
 
 -- Создание таблицы film_genres
 CREATE TABLE IF NOT EXISTS reviews (
@@ -124,5 +132,3 @@ CREATE TABLE IF NOT EXISTS film_directors (
     director_id BIGINT REFERENCES directors (id) ON DELETE CASCADE,
     CONSTRAINT pk_film_directors PRIMARY KEY(film_id, director_id)
 );
-
-
